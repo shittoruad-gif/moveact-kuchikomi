@@ -1,10 +1,7 @@
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
+import mysql from 'mysql2/promise'
+import { drizzle } from 'drizzle-orm/mysql2'
 import * as schema from './schema'
-import path from 'path'
 
-const dbDir = process.env.DB_DIR || process.cwd()
-const sqlite = new Database(path.join(dbDir, 'data.db'))
-sqlite.pragma('journal_mode = WAL')
+const pool = mysql.createPool(process.env.DATABASE_URL!)
 
-export const db = drizzle(sqlite, { schema })
+export const db = drizzle(pool, { schema, mode: 'default' })

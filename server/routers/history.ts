@@ -20,7 +20,7 @@ export const historyRouter = router({
       })
     )
     .mutation(async ({ input }) => {
-      return db.insert(reviewHistory).values(input).run()
+      return db.insert(reviewHistory).values(input)
     }),
 
   list: publicProcedure
@@ -32,7 +32,6 @@ export const historyRouter = router({
         .where(eq(reviewHistory.visitorId, input.visitorId))
         .orderBy(desc(reviewHistory.createdAt))
         .limit(5)
-        .all()
     }),
 
   delete: publicProcedure
@@ -41,6 +40,5 @@ export const historyRouter = router({
       return db
         .delete(reviewHistory)
         .where(eq(reviewHistory.id, input.id))
-        .run()
     }),
 })

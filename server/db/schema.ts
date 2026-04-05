@@ -1,42 +1,43 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core'
+import { mysqlTable, varchar, int, text, datetime, tinyint } from 'drizzle-orm/mysql-core'
+import { sql } from 'drizzle-orm'
 
-export const stores = sqliteTable('stores', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
-  slug: text('slug').notNull().unique(),
+export const stores = mysqlTable('stores', {
+  id: int('id').primaryKey().autoincrement(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
   address: text('address').notNull(),
-  area: text('area').notNull(),
+  area: varchar('area', { length: 255 }).notNull(),
   googleMapsUrl: text('google_maps_url').notNull(),
-  createdAt: text('created_at').notNull().default(new Date().toISOString()),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const menus = sqliteTable('menus', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  name: text('name').notNull(),
-  slug: text('slug').notNull().unique(),
-  description: text('description').notNull().default(''),
-  createdAt: text('created_at').notNull().default(new Date().toISOString()),
+export const menus = mysqlTable('menus', {
+  id: int('id').primaryKey().autoincrement(),
+  name: varchar('name', { length: 255 }).notNull(),
+  slug: varchar('slug', { length: 255 }).notNull().unique(),
+  description: text('description').notNull(),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const reviews = sqliteTable('reviews', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  userId: text('user_id'),
-  storeId: integer('store_id').notNull().references(() => stores.id),
-  menuId: integer('menu_id').notNull().references(() => menus.id),
+export const reviews = mysqlTable('reviews', {
+  id: int('id').primaryKey().autoincrement(),
+  userId: varchar('user_id', { length: 255 }),
+  storeId: int('store_id').notNull().references(() => stores.id),
+  menuId: int('menu_id').notNull().references(() => menus.id),
   content: text('content').notNull(),
-  createdAt: text('created_at').notNull().default(new Date().toISOString()),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const reviewHistory = sqliteTable('review_history', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  visitorId: text('visitor_id').notNull(),
-  storeId: integer('store_id').notNull(),
-  storeName: text('store_name').notNull(),
+export const reviewHistory = mysqlTable('review_history', {
+  id: int('id').primaryKey().autoincrement(),
+  visitorId: varchar('visitor_id', { length: 255 }).notNull(),
+  storeId: int('store_id').notNull(),
+  storeName: varchar('store_name', { length: 255 }).notNull(),
   menuNames: text('menu_names').notNull(),
   reviewText: text('review_text').notNull(),
-  visitDate: text('visit_date').notNull(),
-  agreedToTerms: integer('agreed_to_terms').notNull().default(0),
-  confirmedRealExperience: integer('confirmed_real_experience').notNull().default(0),
-  isNotRelated: integer('is_not_related').notNull().default(0),
-  createdAt: text('created_at').notNull().default(new Date().toISOString()),
+  visitDate: varchar('visit_date', { length: 255 }).notNull(),
+  agreedToTerms: tinyint('agreed_to_terms').notNull().default(0),
+  confirmedRealExperience: tinyint('confirmed_real_experience').notNull().default(0),
+  isNotRelated: tinyint('is_not_related').notNull().default(0),
+  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
