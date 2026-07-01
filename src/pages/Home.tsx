@@ -53,7 +53,7 @@ export function Home() {
   // Selections
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
   const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>([])
-  const [purpose, setPurpose] = useState('')
+  const [purpose, setPurpose] = useState<string[]>([])
   const [satisfaction, setSatisfaction] = useState('')
   const [staffImpression, setStaffImpression] = useState<string[]>([])
   const [staffImpressionText, setStaffImpressionText] = useState('')
@@ -111,6 +111,12 @@ export function Home() {
     )
   }
 
+  const handlePurposeToggle = (value: string) => {
+    setPurpose((prev) =>
+      prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
+    )
+  }
+
   const handleStaffImpressionToggle = (value: string) => {
     setStaffImpression((prev) =>
       prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]
@@ -142,7 +148,7 @@ export function Home() {
         storeName: selectedStore.name,
         storeArea: selectedStore.area,
         menuNames: selectedMenuNames,
-        purpose,
+        purpose: purpose.join('、'),
         satisfaction,
         staffImpression,
         staffImpressionText,
@@ -188,7 +194,7 @@ export function Home() {
   const handleReset = useCallback(() => {
     setSelectedStoreId(null)
     setSelectedMenuIds([])
-    setPurpose('')
+    setPurpose([])
     setSatisfaction('')
     setStaffImpression([])
     setStaffImpressionText('')
@@ -261,10 +267,11 @@ export function Home() {
 
             <TagSelector
               step={3}
-              title="来店目的"
+              title="来店目的（複数選択可）"
               options={PURPOSE_OPTIONS}
               selected={purpose}
-              onSelect={setPurpose}
+              onSelect={handlePurposeToggle}
+              multiple
             />
 
             <TagSelector
