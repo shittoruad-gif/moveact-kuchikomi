@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { toast } from 'sonner'
 import { trpc } from '../lib/trpc'
 import { LineBrowserWarning } from '../components/LineBrowserWarning'
 import { TermsOfService } from '../components/TermsOfService'
@@ -134,23 +135,30 @@ export function Home() {
       .filter((m) => selectedMenuIds.includes(m.id))
       .map((m) => m.name)
 
-    const result = await generateMutation.mutateAsync({
-      storeId: selectedStore.id,
-      menuIds: selectedMenuIds,
-      storeName: selectedStore.name,
-      storeArea: selectedStore.area,
-      menuNames: selectedMenuNames,
-      purpose,
-      satisfaction,
-      staffImpression,
-      staffImpressionText,
-      atmosphere: atmosphereArr,
-      atmosphereText,
-      visitFrequency,
-    })
+    try {
+      const result = await generateMutation.mutateAsync({
+        storeId: selectedStore.id,
+        menuIds: selectedMenuIds,
+        storeName: selectedStore.name,
+        storeArea: selectedStore.area,
+        menuNames: selectedMenuNames,
+        purpose,
+        satisfaction,
+        staffImpression,
+        staffImpressionText,
+        atmosphere: atmosphereArr,
+        atmosphereText,
+        visitFrequency,
+      })
 
-    setVariations(result.variations)
-    setShowThankYou(false)
+      setVariations(result.variations)
+      setShowThankYou(false)
+      toast.success('3つの口コミバリエーションを生成しました！')
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : '口コミの生成に失敗しました。もう一度お試しください。',
+      )
+    }
   }
 
   const handleGoogleMapsOpen = () => {
@@ -298,7 +306,7 @@ export function Home() {
               <button
                 onClick={handleGenerate}
                 disabled={!canGenerate || generateMutation.isPending}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-brand text-white text-lg font-bold hover:bg-brand-light transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
               >
                 {generateMutation.isPending ? (
                   <>

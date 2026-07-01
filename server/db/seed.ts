@@ -11,25 +11,18 @@ async function seed() {
   if (existingStores.length === 0) {
     await db.insert(schema.stores).values([
       {
-        name: 'Moveact 下中野店',
-        slug: 'shimonakano',
-        address: '岡山県岡山市北区下中野',
-        area: '岡山市北区下中野',
-        googleMapsUrl: 'https://www.google.com/maps/place/Moveact+%E4%B8%8B%E4%B8%AD%E9%87%8E%E5%BA%97/',
+        name: 'Moveact 玉島店',
+        slug: 'tamashima',
+        address: '岡山県倉敷市玉島',
+        area: '倉敷市玉島',
+        googleMapsUrl: 'https://g.page/r/CVmVfcWMKWykEBM/review',
       },
       {
-        name: 'Moveact 津高店',
-        slug: 'tsudaka',
-        address: '岡山県岡山市北区津高',
-        area: '岡山市北区津高',
-        googleMapsUrl: 'https://www.google.com/maps/place/Moveact+%E6%B4%A5%E9%AB%98%E5%BA%97/',
-      },
-      {
-        name: 'Moveact 岡山駅前店',
-        slug: 'okayama-ekimae',
-        address: '岡山県岡山市北区駅前町',
-        area: '岡山市北区駅前',
-        googleMapsUrl: 'https://www.google.com/maps/place/Moveact+%E5%B2%A1%E5%B1%B1%E9%A7%85%E5%89%8D%E5%BA%97/',
+        name: 'Moveact 金光店',
+        slug: 'kanemitsu',
+        address: '岡山県浅口市金光町',
+        area: '浅口市金光町',
+        googleMapsUrl: 'https://g.page/r/CZplwIaCoKfzEBM/review',
       },
     ])
     console.log('Stores seeded.')
@@ -39,14 +32,12 @@ async function seed() {
   const existingMenus = await db.select().from(schema.menus)
   if (existingMenus.length === 0) {
     await db.insert(schema.menus).values([
-      { name: '整体', slug: 'seitai', description: '骨格・筋肉のバランスを整える施術' },
-      { name: '美容鍼', slug: 'biyoubari', description: '美容目的の鍼施術' },
-      { name: 'ピラティス', slug: 'pilates', description: '体幹トレーニング' },
-      { name: '鍼灸', slug: 'shinkyu', description: '鍼と灸を使った伝統的な施術' },
-      { name: 'リンパマッサージ', slug: 'lymph-massage', description: 'リンパの流れを改善するマッサージ' },
-      { name: 'ヘッドスパ', slug: 'head-spa', description: '頭皮のケアとリラクゼーション' },
-      { name: '産後ケア', slug: 'sango-care', description: '産後の体のケアと回復サポート' },
-      { name: 'スポーツ整体', slug: 'sports-seitai', description: 'スポーツ障害・パフォーマンス向上' },
+      { name: '整体', slug: 'seitai', description: '骨格や筋肉のバランスを整える施術' },
+      { name: '美容鍼', slug: 'biyo-hari', description: '顔や体のツボに鍼を刺して美容効果を高める施術' },
+      { name: '鍼灸', slug: 'shinkyu', description: '鍼と灸を用いて体の不調を改善する伝統的な施術' },
+      { name: 'ピラティス', slug: 'pilates', description: '体幹を鍛え、姿勢改善やボディメイクを目指すエクササイズ' },
+      { name: 'ダイエット', slug: 'diet', description: '理想的な体型を目指すダイエットプログラム' },
+      { name: 'ボクササイズ', slug: 'boxercise', description: 'ボクシングの動きを取り入れたエクササイズ' },
     ])
     console.log('Menus seeded.')
   }

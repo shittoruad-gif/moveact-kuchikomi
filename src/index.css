@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
 @theme {
+  /* ヘッダーの「Moveact」タイトル用ブランドカラー */
   --color-brand: #2c2a79;
   --color-brand-light: #3d3b9e;
+  /* プライマリカラー（グリーン系） */
+  --color-primary: oklch(0.55 0.15 145);
+  --color-primary-light: oklch(0.62 0.15 145);
 }
 
 body {
   margin: 0;
-  font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', system-ui, sans-serif;
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }

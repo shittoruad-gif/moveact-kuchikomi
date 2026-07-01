@@ -36,7 +36,7 @@ export function ReviewHistory({ items, onLoad, onDelete }: ReviewHistoryProps) {
             <div className="flex gap-2 mt-2">
               <button
                 onClick={() => onLoad(item.reviewText)}
-                className="flex items-center gap-1 text-xs px-3 py-1 rounded border border-brand text-brand hover:bg-indigo-50"
+                className="flex items-center gap-1 text-xs px-3 py-1 rounded border border-primary text-primary hover:bg-primary/5"
               >
                 <ArrowUpRight className="w-3 h-3" />
                 読み込む

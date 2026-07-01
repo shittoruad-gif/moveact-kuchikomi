@@ -16,16 +16,16 @@ export function StoreSelector({ stores, selectedStoreId, onSelect }: StoreSelect
   return (
     <div className="bg-white rounded-xl shadow-sm p-5 mb-4 text-left">
       <div className="flex items-center gap-2 mb-3">
-        <div className="bg-brand text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">1</div>
+        <div className="bg-primary text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">1</div>
         <h2 className="text-lg font-bold text-gray-800">店舗を選択</h2>
       </div>
-      <div className="space-y-2">
+      <div className="grid md:grid-cols-3 gap-2">
         {stores.map((store) => (
           <label
             key={store.id}
             className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-all ${
               selectedStoreId === store.id
-                ? 'border-brand bg-indigo-50'
+                ? 'border-primary bg-primary/5'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -34,7 +34,7 @@ export function StoreSelector({ stores, selectedStoreId, onSelect }: StoreSelect
               name="store"
               checked={selectedStoreId === store.id}
               onChange={() => onSelect(store.id)}
-              className="accent-brand w-4 h-4"
+              className="accent-primary w-4 h-4"
             />
             <MapPin className="w-4 h-4 text-gray-500" />
             <div>

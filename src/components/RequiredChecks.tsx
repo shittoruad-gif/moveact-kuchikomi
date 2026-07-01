@@ -23,6 +23,7 @@ export function RequiredChecks({
   onVisitDateChange,
   visitDateError,
 }: RequiredChecksProps) {
+  const today = new Date().toISOString().split('T')[0]
   return (
     <div className="border-2 border-orange-300 bg-orange-50 rounded-xl p-5 mb-6 text-left">
       <div className="flex items-center gap-2 mb-4">
@@ -62,10 +63,11 @@ export function RequiredChecks({
         </label>
 
         <div className="pt-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">来店日</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">来店日（必須）</label>
           <input
             type="date"
             value={visitDate}
+            max={today}
             onChange={(e) => onVisitDateChange(e.target.value)}
             className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs"
           />

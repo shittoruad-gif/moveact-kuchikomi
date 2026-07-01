@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Copy, Check, ExternalLink, AlertTriangle, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { validateReviewContent } from '../../shared/contentValidator'
 
 interface ReviewResultProps {
@@ -25,24 +26,46 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
   }, [editedText])
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(editedText)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      await navigator.clipboard.writeText(editedText)
+      setCopied(true)
+      toast.success('口コミをコピーしました')
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      toast.error('コピーに失敗しました。手動で選択してコピーしてください')
+    }
   }
 
   const handleGoogleMapsClick = () => {
+    // 投稿前に再度バリデーション（生成後と投稿時の2回チェック）
     const result = validateReviewContent(editedText)
     if (!result.isValid) {
-      alert('禁止キーワードが含まれています。修正してから投稿してください。\n\n' + result.errors.join('\n'))
+      toast.error('禁止キーワードが含まれています。修正してから投稿してください。')
       return
     }
+    if (result.warnings.length > 0) {
+      toast.warning('注意が必要な表現があります。内容をご確認のうえ投稿してください。')
+    }
+    // 最終確認ダイアログ
+    const confirmed = window.confirm(
+      '投稿前の最終確認です。\n\n' +
+        '・この口コミは実際の体験に基づいていますか？\n' +
+        '・虚偽の情報は含まれていませんか？\n' +
+        '・法的責任は投稿者本人に帰属することを理解していますか？\n\n' +
+        'すべて「はい」の場合のみ、OKを押してください。',
+    )
+    if (!confirmed) return
     setShowConfirmDialog(true)
   }
 
   const handleConfirm = () => {
     setShowConfirmDialog(false)
     onGoogleMapsOpen()
-    window.open(googleMapsUrl, '_blank')
+    // ポップアップブロック時は同一タブ遷移でフォールバック
+    const win = window.open(googleMapsUrl, '_blank')
+    if (!win) {
+      window.location.href = googleMapsUrl
+    }
   }
 
   return (
@@ -57,11 +80,11 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
             onClick={() => setSelectedIndex(i)}
             className={`w-full text-left p-3 rounded-lg border-2 transition-all text-sm ${
               selectedIndex === i
-                ? 'border-brand bg-indigo-50'
+                ? 'border-primary bg-primary/5'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <span className="font-medium text-brand">バリエーション {i + 1}</span>
+            <span className="font-medium text-primary">バリエーション {i + 1}</span>
             <p className="text-gray-600 mt-1 line-clamp-2">{v.slice(0, 80)}...</p>
           </button>
         ))}
@@ -115,7 +138,7 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
         <button
           onClick={handleGoogleMapsClick}
           disabled={!validation.isValid}
-          className="flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-brand text-white font-medium hover:bg-brand-light transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-primary text-white font-medium hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ExternalLink className="w-5 h-5" />
           Google マップで投稿する
@@ -147,7 +170,7 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 px-4 py-2 bg-brand text-white rounded-lg font-medium hover:bg-brand-light"
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-light"
               >
                 開く
               </button>

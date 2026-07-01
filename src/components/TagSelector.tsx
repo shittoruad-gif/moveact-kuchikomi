@@ -29,7 +29,7 @@ export function TagSelector({
   return (
     <div className="bg-white rounded-xl shadow-sm p-5 mb-4 text-left">
       <div className="flex items-center gap-2 mb-3">
-        <div className="bg-brand text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">
+        <div className="bg-primary text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">
           {step}
         </div>
         <h2 className="text-lg font-bold text-gray-800">{title}</h2>
@@ -41,7 +41,7 @@ export function TagSelector({
             onClick={() => onSelect(option)}
             className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
               isSelected(option)
-                ? 'border-brand bg-brand text-white'
+                ? 'border-primary bg-primary text-white'
                 : 'border-gray-200 text-gray-700 hover:border-gray-300 bg-white'
             }`}
           >
