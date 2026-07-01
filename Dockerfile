@@ -1,6 +1,6 @@
 FROM node:20 AS build
 WORKDIR /app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 COPY . .
 RUN npm run build
@@ -8,7 +8,7 @@ RUN npm run build
 FROM node:20-slim AS production
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci --omit=dev
 
 # Copy the Vite-built frontend
