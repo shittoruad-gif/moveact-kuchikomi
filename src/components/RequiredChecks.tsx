@@ -1,4 +1,5 @@
 import { CheckCircle2 } from 'lucide-react'
+import { DatePicker } from './DatePicker'
 
 interface RequiredChecksProps {
   agreedToTerms: boolean
@@ -24,6 +25,11 @@ export function RequiredChecks({
   visitDateError,
 }: RequiredChecksProps) {
   const today = new Date().toISOString().split('T')[0]
+  const oneYearAgo = (() => {
+    const d = new Date()
+    d.setFullYear(d.getFullYear() - 1)
+    return d.toISOString().split('T')[0]
+  })()
   return (
     <div className="border-2 border-orange-300 bg-orange-50 rounded-xl p-5 mb-6 text-left">
       <div className="flex items-center gap-2 mb-4">
@@ -64,12 +70,12 @@ export function RequiredChecks({
 
         <div className="pt-2">
           <label className="block text-sm font-medium text-gray-700 mb-1">来店日（必須）</label>
-          <input
-            type="date"
+          <DatePicker
             value={visitDate}
+            onChange={onVisitDateChange}
             max={today}
-            onChange={(e) => onVisitDateChange(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-full max-w-xs"
+            min={oneYearAgo}
+            placeholder="カレンダーから来店日を選択"
           />
           {visitDateError && (
             <p className="text-red-600 text-xs mt-1">{visitDateError}</p>
