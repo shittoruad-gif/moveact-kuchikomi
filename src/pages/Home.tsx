@@ -213,15 +213,21 @@ export function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen">
+      <div className="max-w-4xl mx-auto px-4 py-10 sm:py-14">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-brand mb-2">Moveact</h1>
-          <p className="text-lg text-gray-600">Google マップ 口コミ生成ツール</p>
-          <p className="text-sm text-gray-500 mt-1">
-            質問に答えるだけで、AIが自然な口コミ文章を作成します
+        <div className="mb-10">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-md bg-brand text-white flex items-center justify-center font-serif font-bold text-lg shrink-0">
+              M
+            </div>
+            <h1 className="font-serif text-3xl font-bold text-brand tracking-wide">Moveact</h1>
+          </div>
+          <p className="text-ink text-lg">口コミを書く、その前に。</p>
+          <p className="text-sm text-ink-soft mt-1 max-w-md">
+            いくつかの質問に答えるだけで、Googleマップに投稿できる口コミの下書きをAIが作成します。
           </p>
+          <div className="h-px bg-line mt-6" />
         </div>
 
         <LineBrowserWarning />
@@ -306,7 +312,7 @@ export function Home() {
               <button
                 onClick={handleGenerate}
                 disabled={!canGenerate || generateMutation.isPending}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:bg-primary-light transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-primary text-white text-lg font-bold hover:bg-primary-light transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none shadow-[4px_4px_0_0_var(--color-ink)] active:shadow-none active:translate-x-[4px] active:translate-y-[4px]"
               >
                 {generateMutation.isPending ? (
                   <>
@@ -343,8 +349,9 @@ export function Home() {
         />
 
         {/* Footer */}
-        <div className="text-center text-xs text-gray-400 mt-8 pb-4">
-          <p>&copy; Moveact - 口コミ生成ツール</p>
+        <div className="text-xs text-ink-soft mt-10 pb-4">
+          <div className="h-px bg-line mb-4" />
+          <p>Moveact — 岡山県倉敷市玉島・浅口市金光町</p>
         </div>
       </div>
     </div>

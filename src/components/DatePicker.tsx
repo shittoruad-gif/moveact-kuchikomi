@@ -84,41 +84,41 @@ export function DatePicker({ value, onChange, max, min, placeholder }: DatePicke
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center gap-2 border border-gray-300 rounded-lg px-3 py-2.5 text-sm w-full max-w-xs bg-white hover:border-primary transition-colors"
+        className="flex items-center gap-2 border border-line rounded-lg px-3 py-2.5 text-sm w-full max-w-xs bg-surface hover:border-primary/40 transition-colors"
       >
         <Calendar className="w-4 h-4 text-primary shrink-0" />
-        <span className={value ? 'text-gray-800' : 'text-gray-400'}>
+        <span className={value ? 'text-ink' : 'text-ink-soft'}>
           {value ? formatDisplay(value) : placeholder || '日付を選択'}
         </span>
       </button>
 
       {open && (
-        <div className="absolute z-20 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3 w-72">
+        <div className="absolute z-20 mt-2 bg-surface border border-line rounded-lg shadow-[4px_4px_0_0_var(--color-line)] p-3 w-72">
           <div className="flex items-center justify-between mb-2">
             <button
               type="button"
               onClick={goPrevMonth}
-              className="p-1.5 rounded-lg hover:bg-gray-100"
+              className="p-1.5 rounded-lg hover:bg-primary/5"
               aria-label="前の月"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+              <ChevronLeft className="w-4 h-4 text-ink-soft" />
             </button>
-            <span className="font-medium text-gray-800 text-sm">
+            <span className="font-serif font-medium text-ink text-sm">
               {year}年{month + 1}月
             </span>
             <button
               type="button"
               onClick={goNextMonth}
-              className="p-1.5 rounded-lg hover:bg-gray-100"
+              className="p-1.5 rounded-lg hover:bg-primary/5"
               aria-label="次の月"
             >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+              <ChevronRight className="w-4 h-4 text-ink-soft" />
             </button>
           </div>
 
           <div className="grid grid-cols-7 gap-1 mb-1">
             {WEEKDAYS.map((w) => (
-              <div key={w} className="text-center text-xs text-gray-400 font-medium py-1">
+              <div key={w} className="text-center text-xs text-ink-soft font-medium py-1">
                 {w}
               </div>
             ))}
@@ -138,12 +138,12 @@ export function DatePicker({ value, onChange, max, min, placeholder }: DatePicke
                   onClick={() => handlePick(d)}
                   className={`aspect-square rounded-lg text-sm flex items-center justify-center transition-colors ${
                     disabled
-                      ? 'text-gray-300 cursor-not-allowed'
+                      ? 'text-line cursor-not-allowed'
                       : isSelected
                         ? 'bg-primary text-white font-bold'
                         : isToday
                           ? 'border border-primary text-primary font-medium hover:bg-primary/5'
-                          : 'text-gray-700 hover:bg-primary/5'
+                          : 'text-ink hover:bg-primary/5'
                   }`}
                 >
                   {d.getDate()}

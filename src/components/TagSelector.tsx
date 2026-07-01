@@ -27,22 +27,21 @@ export function TagSelector({
       : selected === option
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-5 mb-4 text-left">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="bg-primary text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold">
-          {step}
-        </div>
-        <h2 className="text-lg font-bold text-gray-800">{title}</h2>
+    <div className="paper-card p-5 mb-5 text-left">
+      <div className="step-heading">
+        <span className="step-index">Step {String(step).padStart(2, '0')}</span>
+        <h2 className="font-bold text-ink whitespace-nowrap">{title}</h2>
+        <span className="step-rule" />
       </div>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => (
           <button
             key={option}
             onClick={() => onSelect(option)}
-            className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition-all ${
+            className={`px-4 py-2 rounded-full text-sm font-medium border transition-all ${
               isSelected(option)
                 ? 'border-primary bg-primary text-white'
-                : 'border-gray-200 text-gray-700 hover:border-gray-300 bg-white'
+                : 'border-line text-ink hover:border-primary/40 bg-surface'
             }`}
           >
             {option}
@@ -54,7 +53,7 @@ export function TagSelector({
           value={freeText || ''}
           onChange={(e) => onFreeTextChange(e.target.value)}
           placeholder={freeTextPlaceholder || '自由記述（任意）'}
-          className="mt-3 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none"
+          className="mt-3 w-full border border-line rounded-lg px-3 py-2 text-sm resize-none bg-surface"
           rows={2}
         />
       )}

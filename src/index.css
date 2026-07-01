@@ -1,16 +1,75 @@
 @import "tailwindcss";
 
 @theme {
-  /* ヘッダーの「Moveact」タイトル用ブランドカラー */
-  --color-brand: #2c2a79;
-  --color-brand-light: #3d3b9e;
-  /* プライマリカラー（グリーン系） */
-  --color-primary: oklch(0.55 0.15 145);
-  --color-primary-light: oklch(0.62 0.15 145);
+  /* --- タイポグラフィ --- */
+  --font-serif: "Shippori Mincho", "Hiragino Mincho ProN", serif;
+  --font-sans: "Noto Sans JP", "Hiragino Kaku Gothic ProN", system-ui, sans-serif;
+
+  /* --- ブランドカラー（Moveactロゴ・見出し） --- */
+  --color-brand: #2a2960;
+  --color-brand-soft: #eceaf7;
+
+  /* --- プライマリカラー（グリーン系、少し深めのインク寄り） --- */
+  --color-primary: oklch(0.44 0.09 155);
+  --color-primary-light: oklch(0.52 0.1 155);
+
+  /* --- 紙・インクのニュートラルトーン --- */
+  --color-paper: #f6f2ea;
+  --color-surface: #fffdf8;
+  --color-line: #e2dbc8;
+  --color-ink: #262521;
+  --color-ink-soft: #6f6a5e;
+
+  /* --- 注意喚起カラー（彩度を落として編集的なトーンに） --- */
+  --color-danger: #a8402c;
+  --color-danger-soft: #f7ece7;
+  --color-warn: #9c6b1f;
+  --color-warn-soft: #f6efdf;
 }
 
 body {
   margin: 0;
-  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', system-ui, sans-serif;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
   -webkit-font-smoothing: antialiased;
+  background-image: radial-gradient(var(--color-line) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+@layer base {
+  button {
+    font-family: inherit;
+  }
+}
+
+@layer components {
+  /* 手作業で作ったような、ぼかしのない紙の切り抜きカード */
+  .paper-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-line);
+    border-radius: 0.875rem;
+    box-shadow: 4px 4px 0 0 var(--color-line);
+  }
+
+  .step-heading {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .step-heading .step-index {
+    font-family: var(--font-serif);
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--color-primary);
+    white-space: nowrap;
+  }
+
+  .step-heading .step-rule {
+    height: 1px;
+    flex: 1;
+    background-color: var(--color-line);
+  }
 }

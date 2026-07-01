@@ -31,10 +31,10 @@ export function RequiredChecks({
     return d.toISOString().split('T')[0]
   })()
   return (
-    <div className="border-2 border-orange-300 bg-orange-50 rounded-xl p-5 mb-6 text-left">
+    <div className="bg-surface border border-line border-l-4 border-l-warn rounded-lg p-5 mb-6 text-left">
       <div className="flex items-center gap-2 mb-4">
-        <CheckCircle2 className="w-5 h-5 text-orange-600" />
-        <h2 className="text-lg font-bold text-orange-800">必須確認事項</h2>
+        <CheckCircle2 className="w-5 h-5 text-warn" />
+        <h2 className="font-bold text-ink">必須確認事項</h2>
       </div>
 
       <div className="space-y-3">
@@ -43,9 +43,9 @@ export function RequiredChecks({
             type="checkbox"
             checked={agreedToTerms}
             onChange={(e) => onAgreedToTermsChange(e.target.checked)}
-            className="mt-1 w-5 h-5 rounded accent-orange-600"
+            className="mt-1 w-5 h-5 rounded accent-warn"
           />
-          <span className="text-sm text-gray-800">上記の利用規約を読み、同意します</span>
+          <span className="text-sm text-ink">上記の利用規約を読み、同意します</span>
         </label>
 
         <label className="flex items-start gap-3 cursor-pointer">
@@ -53,9 +53,9 @@ export function RequiredChecks({
             type="checkbox"
             checked={confirmedRealExperience}
             onChange={(e) => onConfirmedRealExperienceChange(e.target.checked)}
-            className="mt-1 w-5 h-5 rounded accent-orange-600"
+            className="mt-1 w-5 h-5 rounded accent-warn"
           />
-          <span className="text-sm text-gray-800">このツールを利用した口コミは、実際の体験に基づいています</span>
+          <span className="text-sm text-ink">このツールを利用した口コミは、実際の体験に基づいています</span>
         </label>
 
         <label className="flex items-start gap-3 cursor-pointer">
@@ -63,13 +63,13 @@ export function RequiredChecks({
             type="checkbox"
             checked={isNotRelated}
             onChange={(e) => onIsNotRelatedChange(e.target.checked)}
-            className="mt-1 w-5 h-5 rounded accent-orange-600"
+            className="mt-1 w-5 h-5 rounded accent-warn"
           />
-          <span className="text-sm text-gray-800">私は店舗関係者（スタッフ、家族、取引先など）ではありません</span>
+          <span className="text-sm text-ink">私は店舗関係者（スタッフ、家族、取引先など）ではありません</span>
         </label>
 
         <div className="pt-2">
-          <label className="block text-sm font-medium text-gray-700 mb-1">来店日（必須）</label>
+          <label className="block text-sm font-medium text-ink mb-1">来店日（必須）</label>
           <DatePicker
             value={visitDate}
             onChange={onVisitDateChange}
@@ -78,7 +78,7 @@ export function RequiredChecks({
             placeholder="カレンダーから来店日を選択"
           />
           {visitDateError && (
-            <p className="text-red-600 text-xs mt-1">{visitDateError}</p>
+            <p className="text-danger text-xs mt-1">{visitDateError}</p>
           )}
         </div>
       </div>
