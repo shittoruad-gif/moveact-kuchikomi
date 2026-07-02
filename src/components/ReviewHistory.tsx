@@ -2,6 +2,7 @@ import { Clock, Trash2, ArrowUpRight } from 'lucide-react'
 
 interface HistoryItem {
   id: number
+  storeId: number
   storeName: string
   menuNames: string
   reviewText: string
@@ -11,7 +12,7 @@ interface HistoryItem {
 
 interface ReviewHistoryProps {
   items: HistoryItem[]
-  onLoad: (text: string) => void
+  onLoad: (item: HistoryItem) => void
   onDelete: (id: number) => void
 }
 
@@ -35,7 +36,7 @@ export function ReviewHistory({ items, onLoad, onDelete }: ReviewHistoryProps) {
             <p className="text-sm text-ink-soft line-clamp-2">{item.reviewText}</p>
             <div className="flex gap-2 mt-2">
               <button
-                onClick={() => onLoad(item.reviewText)}
+                onClick={() => onLoad(item)}
                 className="flex items-center gap-1 text-xs px-3 py-1 rounded border border-primary text-primary hover:bg-primary/5"
               >
                 <ArrowUpRight className="w-3 h-3" />

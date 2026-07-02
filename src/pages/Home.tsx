@@ -131,8 +131,12 @@ export function Home() {
 
   const allChecksComplete =
     agreedToTerms && confirmedRealExperience && isNotRelated && visitDate && !visitDateError
+  // 満足度は生成トーンを決める入力なので必須にする
   const canGenerate =
-    allChecksComplete && selectedStoreId !== null && selectedMenuIds.length > 0
+    allChecksComplete &&
+    selectedStoreId !== null &&
+    selectedMenuIds.length > 0 &&
+    satisfaction !== ''
 
   const handleGenerate = async () => {
     if (!canGenerate || !selectedStore) return
@@ -167,10 +171,10 @@ export function Home() {
     }
   }
 
-  const handleGoogleMapsOpen = () => {
+  const handleGoogleMapsOpen = (postedText: string) => {
     setShowThankYou(true)
-    // Save to history
-    if (variations && selectedStore) {
+    // 実際に投稿画面へ持っていったテキスト（編集後）を履歴に保存する
+    if (selectedStore) {
       const selectedMenuNames = menus
         .filter((m) => selectedMenuIds.includes(m.id))
         .map((m) => m.name)
@@ -180,7 +184,7 @@ export function Home() {
           storeId: selectedStore.id,
           storeName: selectedStore.name,
           menuNames: selectedMenuNames.join('、'),
-          reviewText: variations[0],
+          reviewText: postedText,
           visitDate,
           agreedToTerms: 1,
           confirmedRealExperience: 1,
@@ -205,9 +209,15 @@ export function Home() {
     setShowThankYou(false)
   }, [])
 
-  const handleLoadFromHistory = (text: string) => {
-    setVariations([text, text, text])
+  const handleLoadFromHistory = (item: { storeId: number; reviewText: string }) => {
+    // 履歴の店舗を自動選択（店舗未選択のままだと編集画面が表示されないため）
+    setSelectedStoreId(item.storeId)
+    // 1案だけ渡すと ReviewResult 側で案選択が非表示になる
+    setVariations([item.reviewText])
     setShowThankYou(false)
+    if (!allChecksComplete) {
+      toast.info('必須確認事項にチェックし、来店日を入力すると内容を確認・編集できます')
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -276,7 +286,7 @@ export function Home() {
 
             <TagSelector
               step={4}
-              title="満足度"
+              title="満足度（必須）"
               options={SATISFACTION_OPTIONS}
               selected={satisfaction}
               onSelect={setSatisfaction}

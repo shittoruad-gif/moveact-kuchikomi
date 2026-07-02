@@ -19,15 +19,6 @@ export const menus = mysqlTable('menus', {
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const reviews = mysqlTable('reviews', {
-  id: int('id').primaryKey().autoincrement(),
-  userId: varchar('user_id', { length: 255 }),
-  storeId: int('store_id').notNull().references(() => stores.id),
-  menuId: int('menu_id').notNull().references(() => menus.id),
-  content: text('content').notNull(),
-  createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-})
-
 export const reviewHistory = mysqlTable('review_history', {
   id: int('id').primaryKey().autoincrement(),
   visitorId: varchar('visitor_id', { length: 255 }).notNull(),

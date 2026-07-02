@@ -6,7 +6,8 @@ import { validateReviewContent } from '../../shared/contentValidator'
 interface ReviewResultProps {
   variations: string[]
   googleMapsUrl: string
-  onGoogleMapsOpen: () => void
+  // 実際に投稿されるテキスト（編集後）を受け取って履歴に保存する
+  onGoogleMapsOpen: (postedText: string) => void
 }
 
 export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: ReviewResultProps) {
@@ -43,24 +44,12 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
       toast.error('禁止キーワードが含まれています。修正してから投稿してください。')
       return
     }
-    if (result.warnings.length > 0) {
-      toast.warning('注意が必要な表現があります。内容をご確認のうえ投稿してください。')
-    }
-    // 最終確認ダイアログ
-    const confirmed = window.confirm(
-      '投稿前の最終確認です。\n\n' +
-        '・この口コミは実際の体験に基づいていますか？\n' +
-        '・虚偽の情報は含まれていませんか？\n' +
-        '・法的責任は投稿者本人に帰属することを理解していますか？\n\n' +
-        'すべて「はい」の場合のみ、OKを押してください。',
-    )
-    if (!confirmed) return
     setShowConfirmDialog(true)
   }
 
   const handleConfirm = () => {
     setShowConfirmDialog(false)
-    onGoogleMapsOpen()
+    onGoogleMapsOpen(editedText)
     // ポップアップブロック時は同一タブ遷移でフォールバック
     const win = window.open(googleMapsUrl, '_blank')
     if (!win) {
@@ -72,23 +61,25 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
     <div className="paper-card p-5 mb-5 text-left">
       <h2 className="font-serif font-bold text-lg text-ink mb-3">生成された口コミ</h2>
 
-      {/* Variation selector */}
-      <div className="space-y-2 mb-4">
-        {variations.map((v, i) => (
-          <button
-            key={i}
-            onClick={() => setSelectedIndex(i)}
-            className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
-              selectedIndex === i
-                ? 'border-primary bg-primary/5'
-                : 'border-line hover:border-primary/40'
-            }`}
-          >
-            <span className="font-serif font-medium text-primary">案 {i + 1}</span>
-            <p className="text-ink-soft mt-1 line-clamp-2">{v.slice(0, 80)}...</p>
-          </button>
-        ))}
-      </div>
+      {/* Variation selector（履歴からの読み込み時など1案のみの場合は表示しない） */}
+      {variations.length > 1 && (
+        <div className="space-y-2 mb-4">
+          {variations.map((v, i) => (
+            <button
+              key={i}
+              onClick={() => setSelectedIndex(i)}
+              className={`w-full text-left p-3 rounded-lg border transition-all text-sm ${
+                selectedIndex === i
+                  ? 'border-primary bg-primary/5'
+                  : 'border-line hover:border-primary/40'
+              }`}
+            >
+              <span className="font-serif font-medium text-primary">案 {i + 1}</span>
+              <p className="text-ink-soft mt-1 line-clamp-2">{v.slice(0, 80)}...</p>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Editor */}
       <div className="mb-3">
@@ -149,16 +140,18 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
       {showConfirmDialog && (
         <div className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4">
           <div className="bg-surface border border-line rounded-lg p-6 max-w-md w-full shadow-[5px_5px_0_0_var(--color-ink)]">
-            <h3 className="font-serif font-bold text-lg text-ink mb-3">Google マップを開きます</h3>
-            <p className="text-sm text-ink-soft mb-2">
-              口コミをコピーしてから Google マップの投稿画面に移動します。
-            </p>
+            <h3 className="font-serif font-bold text-lg text-ink mb-3">投稿前の最終確認</h3>
+            <ul className="text-sm text-ink space-y-1.5 mb-3 list-disc pl-5 marker:text-ink-soft">
+              <li>この口コミは実際の体験に基づいていますか？</li>
+              <li>虚偽の情報は含まれていませんか？</li>
+              <li>法的責任は投稿者本人に帰属することを理解していますか？</li>
+            </ul>
             <p className="text-sm text-ink-soft mb-4">
-              Google マップの投稿欄に口コミを貼り付けて投稿してください。
+              すべて「はい」の場合のみお進みください。口コミをコピーのうえ、Google マップの投稿欄に貼り付けて投稿してください。
             </p>
             {validation.warnings.length > 0 && (
               <div className="bg-warn-soft border-l-2 border-warn rounded-r-md p-3 mb-4 text-sm text-warn">
-                注意事項がありますが、投稿は可能です。
+                注意が必要な表現があります。内容をご確認のうえ投稿してください。
               </div>
             )}
             <div className="flex gap-3">
@@ -172,7 +165,7 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
                 onClick={handleConfirm}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-light"
               >
-                開く
+                はい、投稿画面を開く
               </button>
             </div>
           </div>

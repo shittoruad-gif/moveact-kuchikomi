@@ -3,7 +3,7 @@ import cors from 'cors'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { createExpressMiddleware } from '@trpc/server/adapters/express'
-import { router } from './trpc'
+import { router, createContext } from './trpc'
 import { storesRouter } from './routers/stores'
 import { menusRouter } from './routers/menus'
 import { reviewRouter } from './routers/review'
@@ -19,10 +19,12 @@ const appRouter = router({
 export type AppRouter = typeof appRouter
 
 const app = express()
+// Traefik リバースプロキシ配下で X-Forwarded-For から実クライアントIPを得る
+app.set('trust proxy', 1)
 app.use(cors())
 app.use(
   '/trpc',
-  createExpressMiddleware({ router: appRouter })
+  createExpressMiddleware({ router: appRouter, createContext })
 )
 
 // In production, serve the Vite-built frontend

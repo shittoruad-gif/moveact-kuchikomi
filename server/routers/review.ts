@@ -117,8 +117,36 @@ async function generateOne(
   return (completion.choices[0]?.message?.content ?? '').trim()
 }
 
+// IPごとの簡易レートリミット（1分3回・1時間20回）。
+// 認証なしの公開エンドポイントなので、連打やスクリプトによるLLM課金の暴走を防ぐ。
+const RATE_LIMITS = [
+  { windowMs: 60_000, max: 3, message: '生成リクエストが多すぎます。1分ほど待ってからお試しください。' },
+  { windowMs: 3_600_000, max: 20, message: '1時間あたりの生成回数の上限に達しました。時間をおいてお試しください。' },
+]
+const hitLog = new Map<string, number[]>()
+
+function assertRateLimit(key: string) {
+  const now = Date.now()
+  const maxWindow = Math.max(...RATE_LIMITS.map((r) => r.windowMs))
+  const hits = (hitLog.get(key) ?? []).filter((t) => now - t < maxWindow)
+  for (const { windowMs, max, message } of RATE_LIMITS) {
+    if (hits.filter((t) => now - t < windowMs).length >= max) {
+      throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message })
+    }
+  }
+  hits.push(now)
+  hitLog.set(key, hits)
+  // 溜まりすぎ防止の掃除
+  if (hitLog.size > 10_000) {
+    for (const [k, v] of hitLog) {
+      if (v.every((t) => now - t >= maxWindow)) hitLog.delete(k)
+    }
+  }
+}
+
 export const reviewRouter = router({
-  generate: publicProcedure.input(generateInput).mutation(async ({ input }) => {
+  generate: publicProcedure.input(generateInput).mutation(async ({ input, ctx }) => {
+    assertRateLimit(ctx.ip)
     const client = getClient()
     const isNegative = input.satisfaction === '不満' || input.satisfaction === 'とても不満'
     const tones = isNegative ? NEGATIVE_TONES : POSITIVE_TONES

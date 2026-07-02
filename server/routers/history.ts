@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { router, publicProcedure } from '../trpc'
 import { db } from '../db'
 import { reviewHistory } from '../db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { eq, and, desc } from 'drizzle-orm'
 
 export const historyRouter = router({
   save: publicProcedure
@@ -37,8 +37,14 @@ export const historyRouter = router({
   delete: publicProcedure
     .input(z.object({ id: z.number(), visitorId: z.string() }))
     .mutation(async ({ input }) => {
+      // visitorId も一致条件に含め、他人の履歴を ID 指定で消せないようにする
       return db
         .delete(reviewHistory)
-        .where(eq(reviewHistory.id, input.id))
+        .where(
+          and(
+            eq(reviewHistory.id, input.id),
+            eq(reviewHistory.visitorId, input.visitorId),
+          )
+        )
     }),
 })
