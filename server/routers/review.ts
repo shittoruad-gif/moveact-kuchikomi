@@ -20,25 +20,28 @@ const generateInput = z.object({
 
 type GenerateInput = z.infer<typeof generateInput>
 
-// OpenAI互換クライアント（遅延初期化）
+// Google Gemini を OpenAI 互換エンドポイント経由で利用する（遅延初期化）
+const GEMINI_BASE_URL =
+  process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai/'
+
 let _client: OpenAI | null = null
 function getClient(): OpenAI {
   if (!_client) {
-    if (!process.env.OPENAI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       throw new TRPCError({
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'AIサービスが設定されていません（OPENAI_API_KEY 未設定）',
+        message: 'AIサービスが設定されていません（GEMINI_API_KEY 未設定）',
       })
     }
     _client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-      baseURL: process.env.OPENAI_BASE_URL || undefined,
+      apiKey: process.env.GEMINI_API_KEY,
+      baseURL: GEMINI_BASE_URL,
     })
   }
   return _client
 }
 
-const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 
 // 肯定的／否定的、それぞれ3つのトーン指示
 const POSITIVE_TONES = [
@@ -109,6 +112,9 @@ async function generateOne(
     model: MODEL,
     temperature: 0.9,
     max_tokens: 700,
+    // Gemini 2.5系は既定で「思考」が有効で max_tokens を消費し出力が途切れるため無効化する。
+    // reasoning_effort は Gemini 独自の "none" を使うため型を緩めて渡す。
+    reasoning_effort: 'none' as unknown as 'low',
     messages: [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
