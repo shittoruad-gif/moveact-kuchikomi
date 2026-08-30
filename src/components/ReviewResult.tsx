@@ -155,7 +155,7 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
               <li>法的責任は投稿者本人に帰属することを理解していますか？</li>
             </ul>
             <p className="text-sm text-ink-soft mb-4">
-              すべて「はい」の場合のみお進みください。口コミをコピーのうえ、Google マップの投稿欄に貼り付けて投稿してください。
+              すべて「はい」の場合のみお進みください。ボタンを押すと<strong className="text-ink">口コミが自動でコピーされ</strong>、Google マップの投稿画面が開きます。投稿欄を長押しして「ペースト（貼り付け）」してください。
             </p>
             {validation.warnings.length > 0 && (
               <div className="bg-warn-soft border-l-2 border-warn rounded-r-md p-3 mb-4 text-sm text-warn">
@@ -173,7 +173,7 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
                 onClick={handleConfirm}
                 className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-light"
               >
-                はい、投稿画面を開く
+                コピーして投稿画面を開く
               </button>
             </div>
           </div>

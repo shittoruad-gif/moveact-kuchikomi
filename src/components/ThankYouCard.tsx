@@ -11,6 +11,9 @@ export function ThankYouCard({ onReset }: ThankYouCardProps) {
       <h2 className="font-serif text-xl font-bold text-ink mb-2">
         口コミの投稿、ありがとうございます！
       </h2>
+      <div className="bg-primary/5 border border-primary/30 rounded-lg p-3 mb-4 text-sm text-ink text-left">
+        作成した口コミは<strong>コピー済み</strong>です。開いたGoogleマップの投稿欄を長押しして「ペースト（貼り付け）」すると、そのまま投稿できます。
+      </div>
       <p className="text-sm text-ink-soft mb-4">
         皆様の口コミが、他のお客様の参考になります。
       </p>
