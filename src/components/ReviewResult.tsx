@@ -47,8 +47,16 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
     setShowConfirmDialog(true)
   }
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setShowConfirmDialog(false)
+    // 「コピーのうえ貼り付けて」と案内しているのに、コピーを押し忘れたまま
+    // 投稿画面へ行くと貼り付けるものが無い。確定時に必ず自動コピーする。
+    try {
+      await navigator.clipboard.writeText(editedText)
+      toast.success('口コミをコピーしました。投稿欄に貼り付けてください')
+    } catch {
+      toast.error('自動コピーできませんでした。「口コミをコピー」を押してから投稿してください')
+    }
     onGoogleMapsOpen(editedText)
     // ポップアップブロック時は同一タブ遷移でフォールバック
     const win = window.open(googleMapsUrl, '_blank')
