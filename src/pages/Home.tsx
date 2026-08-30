@@ -54,6 +54,8 @@ export function Home() {
   const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null)
   const [selectedMenuIds, setSelectedMenuIds] = useState<number[]>([])
   const [purpose, setPurpose] = useState<string[]>([])
+  // 来店目的の自由入力（選択肢に無い目的を自分の言葉で書ける。三上様要望 2026-08-30）
+  const [purposeText, setPurposeText] = useState('')
   const [satisfaction, setSatisfaction] = useState('')
   const [staffImpression, setStaffImpression] = useState<string[]>([])
   const [staffImpressionText, setStaffImpressionText] = useState('')
@@ -152,7 +154,7 @@ export function Home() {
         storeName: selectedStore.name,
         storeArea: selectedStore.area,
         menuNames: selectedMenuNames,
-        purpose: purpose.join('、'),
+        purpose: [...purpose, purposeText.trim()].filter(Boolean).join('、'),
         satisfaction,
         staffImpression,
         staffImpressionText,
@@ -199,6 +201,7 @@ export function Home() {
     setSelectedStoreId(null)
     setSelectedMenuIds([])
     setPurpose([])
+    setPurposeText('')
     setSatisfaction('')
     setStaffImpression([])
     setStaffImpressionText('')
@@ -282,6 +285,9 @@ export function Home() {
               selected={purpose}
               onSelect={handlePurposeToggle}
               multiple
+              freeText={purposeText}
+              onFreeTextChange={(v) => setPurposeText(v.slice(0, 100))}
+              freeTextPlaceholder="ご自身の言葉でも入力できます（例：デスクワークで背中が重くて…）"
             />
 
             <TagSelector
