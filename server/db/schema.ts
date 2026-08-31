@@ -32,3 +32,11 @@ export const reviewHistory = mysqlTable('review_history', {
   isNotRelated: tinyint('is_not_related').notNull().default(0),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
+
+/** 月次レポートの送信記録。同じ月を二度送らないための UNIQUE を持つ。 */
+export const reportDeliveries = mysqlTable('report_deliveries', {
+  id: int('id').primaryKey().autoincrement(),
+  month: varchar('month', { length: 7 }).notNull().unique(),
+  status: varchar('status', { length: 16 }).notNull().default('pending'),
+  sentAt: datetime('sent_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+})

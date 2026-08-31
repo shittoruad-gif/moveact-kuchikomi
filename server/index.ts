@@ -8,6 +8,7 @@ import { storesRouter } from './routers/stores'
 import { menusRouter } from './routers/menus'
 import { reviewRouter } from './routers/review'
 import { historyRouter } from './routers/history'
+import { initMonthlyReportScheduler } from './monthlyReport'
 
 const appRouter = router({
   stores: storesRouter,
@@ -40,4 +41,6 @@ if (process.env.NODE_ENV === 'production') {
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3001
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on http://0.0.0.0:${PORT}`)
+  // 月次レポートの自動送信（毎月1日 9:00 JST に公式LINEへ）
+  initMonthlyReportScheduler()
 })
