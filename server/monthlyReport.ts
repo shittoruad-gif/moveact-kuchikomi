@@ -7,10 +7,10 @@
  *   毎月1日の朝に自動で公式LINEへ送る。人の手は入らない。
  *
  * 送り先:
- *   店舗さまの公式LINE（Messaging API のプッシュ）。
- *   環境変数 KUCHIKOMI_LINE_TOKEN（チャネルアクセストークン）と
- *   KUCHIKOMI_LINE_TO（送信先のユーザーID／グループID）が揃ったときだけ動く。
- *   未設定なら何もしない（ログだけ）。
+ *   しっとる通知ハブ（shittoru-notify-hub）経由で、お客様の公式LINEへ届く。
+ *   このアプリはLINEのトークンを持たない。持つとお客様が増えるたびに
+ *   アプリごとの設定が必要になるため、宛先の管理はハブに寄せている。
+ *   NOTIFY_HUB_URL / NOTIFY_HUB_KEY / NOTIFY_CODE が揃ったときだけ動く。
  *
  * 二重送信の防止:
  *   report_deliveries に (month) を UNIQUE で入れてから送る。
@@ -126,20 +126,29 @@ export function formatForLine(r: Report): string {
   return lines.join('\n')
 }
 
-async function pushLine(text: string): Promise<boolean> {
-  const token = process.env.KUCHIKOMI_LINE_TOKEN
-  const to = process.env.KUCHIKOMI_LINE_TO
-  if (!token || !to) {
-    console.log('[MonthlyReport] LINEの設定が無いため送信をスキップ（KUCHIKOMI_LINE_TOKEN / KUCHIKOMI_LINE_TO）')
+/**
+ * しっとる通知ハブ経由で送る。
+ *
+ * 各アプリが直接LINEのトークンを持つと、お客様が増えるたびに
+ * アプリごと・お客様ごとの設定が必要になり、工数が積み上がる。
+ * ハブに「どのご契約（code）へ」だけ伝えれば、宛先はハブが知っている。
+ */
+async function pushLine(text: string, dedupeKey: string): Promise<boolean> {
+  const url = process.env.NOTIFY_HUB_URL
+  const key = process.env.NOTIFY_HUB_KEY
+  const code = process.env.NOTIFY_CODE
+  if (!url || !key || !code) {
+    console.log('[MonthlyReport] 通知ハブの設定が無いため送信をスキップ（NOTIFY_HUB_URL / NOTIFY_HUB_KEY / NOTIFY_CODE）')
     return false
   }
-  const res = await fetch('https://api.line.me/v2/bot/message/push', {
+  const res = await fetch(`${url.replace(/\/$/, '')}/notify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ to, messages: [{ type: 'text', text }] }),
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+    body: JSON.stringify({ code, service: 'kuchikomi', text, dedupeKey }),
   })
+  const body = await res.text().catch(() => '')
   if (!res.ok) {
-    console.error('[MonthlyReport] LINE送信に失敗', res.status, (await res.text()).slice(0, 200))
+    console.error('[MonthlyReport] 通知ハブへの送信に失敗', res.status, body.slice(0, 200))
     return false
   }
   return true
@@ -175,7 +184,7 @@ export async function runMonthlyReport(opts: { month?: string; force?: boolean }
   }
   const report = await buildReport(month)
   const text = formatForLine(report)
-  const ok = await pushLine(text)
+  const ok = await pushLine(text, `kuchikomi:${month}`)
   if (!opts.force) await markResult(month, ok)
   console.log(`[MonthlyReport] ${month} 下書き${report.drafts}件 送信=${ok ? '成功' : '未送信'}`)
   return { skipped: false, month, sent: ok, drafts: report.drafts }
