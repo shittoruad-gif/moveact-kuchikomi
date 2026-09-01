@@ -164,8 +164,20 @@ async function claimMonth(month: string): Promise<boolean> {
   }
 }
 
-async function markResult(month: string, ok: boolean) {
-  await db.execute(sql`UPDATE report_deliveries SET status = ${ok ? 'sent' : 'failed'} WHERE month = ${month}`)
+/**
+ * 送れなかった月の記録は消す。
+ *
+ * 記録を残したまま失敗扱いにすると、次のティックで「送信済み」と判断されて
+ * その月は永久に届かなくなる。実際に2026年9月1日、通知ハブの設定が入る前に
+ * スケジューラが動いて、8月分がこの状態になった。
+ * 記録は「二重送信を防ぐための一時的な予約」であって、成功の証ではない。
+ */
+async function releaseMonth(month: string) {
+  await db.execute(sql`DELETE FROM report_deliveries WHERE month = ${month}`)
+}
+
+async function markSent(month: string) {
+  await db.execute(sql`UPDATE report_deliveries SET status = 'sent' WHERE month = ${month}`)
 }
 
 /**
@@ -185,20 +197,28 @@ export async function runMonthlyReport(opts: { month?: string; force?: boolean }
   const report = await buildReport(month)
   const text = formatForLine(report)
   const ok = await pushLine(text, `kuchikomi:${month}`)
-  if (!opts.force) await markResult(month, ok)
+  if (!opts.force) {
+    if (ok) await markSent(month)
+    else await releaseMonth(month) // 次のティックでやり直す
+  }
   console.log(`[MonthlyReport] ${month} 下書き${report.drafts}件 送信=${ok ? '成功' : '未送信'}`)
   return { skipped: false, month, sent: ok, drafts: report.drafts }
 }
 
 /**
- * スケジューラ。毎月1日 9:00 JST に送る。
+ * スケジューラ。毎月1日の朝9時以降に送る。
  * 1時間ごとに時刻を見るだけの素朴な方式（node-cronを足さずに済ませる）。
  * 起動直後にも1回見るので、1日にサーバーが再起動しても取りこぼさない。
+ *
+ * 送信の窓を「1日の9時ちょうど」ではなく「1〜3日の9時以降」にしてある。
+ * 1時間だけの窓だと、その瞬間に設定が欠けていたりネットワークが不調だと
+ * その月は二度と試されない。実際に2026年9月1日の9時にそれが起きた。
+ * 送信済みかどうかは report_deliveries で見ているので、窓を広げても二重には送らない。
  */
 export function initMonthlyReportScheduler() {
   const tick = async () => {
     const j = jstNow()
-    if (j.getUTCDate() !== 1 || j.getUTCHours() !== 9) return
+    if (j.getUTCDate() > 3 || j.getUTCHours() < 9) return
     try {
       await runMonthlyReport()
     } catch (e) {
