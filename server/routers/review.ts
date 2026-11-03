@@ -6,6 +6,7 @@ import { router, publicProcedure } from '../trpc'
 import { db } from '../db'
 import { menus, stores } from '../db/schema'
 import { NEGATIVE_SATISFACTIONS, type TenantConfig } from '../../shared/tenantConfig'
+import { addGeneration, currentMonthJst, getGenerationCount } from '../generationCount'
 
 // 店名・地域・メニュー名は画面から受け取らず、IDからこのお店のDBの値を引く
 // （別のお店の店名で文章を作らせない）
@@ -165,6 +166,13 @@ export const reviewRouter = router({
   generate: publicProcedure.input(generateInput).mutation(async ({ input, ctx }) => {
     assertRateLimit(ctx.ip)
     const { config } = ctx.tenant
+    const month = currentMonthJst()
+    if (config.monthlyLimit !== null && (await getGenerationCount(ctx.tenant.id, month)) >= config.monthlyLimit) {
+      throw new TRPCError({
+        code: 'TOO_MANY_REQUESTS',
+        message: '今月の作成回数の上限に達したため、いまは下書きを作れません。お手数ですが、お店のスタッフにお知らせください。',
+      })
+    }
     const [store] = await db
       .select()
       .from(stores)
@@ -195,6 +203,8 @@ export const reviewRouter = router({
         ),
       )
       const cleaned = variations.map((v) => v || '口コミの生成に失敗しました。もう一度お試しください。')
+      // 数え損ねても、お客様の下書きは返す
+      await addGeneration(ctx.tenant.id, month).catch((e) => console.error('[review.generate] 回数の記録に失敗', e))
       return { variations: cleaned }
     } catch (err) {
       console.error('[review.generate] LLM error', err)

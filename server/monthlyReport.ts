@@ -19,8 +19,9 @@
  *   サーバーが再起動しても、同じお店の同じ月を二度送らない。
  */
 import { db } from './db'
-import { sql } from 'drizzle-orm'
+import { sql, type SQL } from 'drizzle-orm'
 import { listTenants, type Tenant } from './tenant'
+import { getGenerationCount } from './generationCount'
 
 const TZ_OFFSET_MS = 9 * 60 * 60 * 1000 // JST
 
@@ -48,6 +49,8 @@ function monthRange(month: string) {
 export type Report = {
   month: string
   drafts: number
+  /** AIで案を作った回数（Googleの投稿画面へ進まなかった分も含む） */
+  generations: number
   people: number
   prevDrafts: number
   byStore: { name: string; n: number }[]
@@ -57,7 +60,12 @@ export type Report = {
 
 export async function buildReport(tenantId: number, month: string): Promise<Report> {
   const { from, to } = monthRange(month)
-  const one = async (q: any) => (await db.execute(q)) as any
+  type Row = Record<string, unknown>
+  // mysql2 は [rows, fields] を返す。rows だけ取り出す
+  const one = async (q: SQL): Promise<Row[]> => {
+    const r = (await db.execute(q)) as unknown
+    return Array.isArray(r) ? (Array.isArray(r[0]) ? (r[0] as Row[]) : (r as Row[])) : []
+  }
 
   const total = await one(sql`SELECT COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS people
     FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}`)
@@ -73,18 +81,18 @@ export async function buildReport(tenantId: number, month: string): Promise<Repo
       SUM(confirmed_real_experience) AS real_exp, SUM(is_not_related) AS not_related
     FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}`)
 
-  const rows = (r: any) => (Array.isArray(r) ? (Array.isArray(r[0]) ? r[0] : r) : [])
-  const t = rows(total)[0] ?? { n: 0, people: 0 }
-  const p = rows(prev)[0] ?? { n: 0 }
-  const c = rows(consent)[0] ?? { n: 0, real_exp: 0, not_related: 0 }
+  const t = total[0] ?? { n: 0, people: 0 }
+  const p = prev[0] ?? { n: 0 }
+  const c = consent[0] ?? { n: 0, real_exp: 0, not_related: 0 }
 
   return {
     month,
     drafts: Number(t.n ?? 0),
+    generations: await getGenerationCount(tenantId, month),
     people: Number(t.people ?? 0),
     prevDrafts: Number(p.n ?? 0),
-    byStore: rows(byStore).map((r: any) => ({ name: String(r.name), n: Number(r.n) })),
-    byMenu: rows(byMenu).map((r: any) => ({ name: String(r.name), n: Number(r.n) })),
+    byStore: byStore.map((r) => ({ name: String(r.name), n: Number(r.n) })),
+    byMenu: byMenu.map((r) => ({ name: String(r.name), n: Number(r.n) })),
     consent: {
       checked: Number(c.n ?? 0),
       realExperience: Number(c.real_exp ?? 0),
@@ -104,18 +112,19 @@ export function formatForLine(r: Report): string {
   lines.push(`${y}年${Number(m)}月のご利用状況`)
   lines.push('')
   lines.push(`口コミの下書きが ${jp(r.drafts)}件 つくられました`)
+  lines.push(`（AIで案を作った回数は ${jp(r.generations)}回）`)
   lines.push(`ご利用いただいた方 ${jp(r.people)}人`)
   lines.push(`前月（${jp(r.prevDrafts)}件）から ${sign}${jp(Math.abs(diff))}件`)
 
   if (r.byStore.length > 1) {
     lines.push('')
     lines.push('【店舗別】')
-    for (const s of r.byStore) lines.push(`・${s.name}　${jp(s.n)}件`)
+    for (const s of r.byStore) lines.push(`・${s.name}\u3000${jp(s.n)}件`)
   }
   if (r.byMenu.length) {
     lines.push('')
     lines.push('【よく選ばれたメニュー】')
-    for (const s of r.byMenu.slice(0, 3)) lines.push(`・${s.name}　${jp(s.n)}件`)
+    for (const s of r.byMenu.slice(0, 3)) lines.push(`・${s.name}\u3000${jp(s.n)}件`)
   }
   if (r.consent.checked > 0) {
     lines.push('')

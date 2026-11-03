@@ -46,6 +46,12 @@ export const tenantConfigSchema = z.object({
   industry: z.string(),
   /** LINE・SNSで共有したときの画像（public/ に置いたファイルのパス）。空なら出さない */
   ogImage: z.string(),
+  /**
+   * 1か月にAIで下書きを作れる回数（お店全体で）。null なら上限なし。
+   * 月額に含むAI利用料の上限（手順書では月100件）を超えないようにするための設定。
+   * 上限に達すると、その月はお客様の画面で「作成できません」と表示される。
+   */
+  monthlyLimit: z.number().int().positive().nullable(),
   colors: colorsSchema,
   words: wordsSchema,
   options: optionsSchema,
@@ -59,6 +65,7 @@ export const DEFAULT_TENANT_CONFIG: TenantConfig = {
   footer: 'Moveact — 岡山県倉敷市玉島・浅口市金光町',
   industry: '鍼灸・ピラティス・整体院',
   ogImage: '/ogp.png',
+  monthlyLimit: null,
   colors: {
     brand: '#2a2960',
     brandSoft: '#eceaf7',

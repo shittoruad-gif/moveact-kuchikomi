@@ -1,23 +1,28 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AlertTriangle, Copy, HelpCircle, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 const DISMISS_KEY = 'moveact-line-warning-dismissed'
 
 export function LineBrowserWarning() {
-  const [isLineBrowser, setIsLineBrowser] = useState(false)
-  const [dismissed, setDismissed] = useState(false)
-
-  useEffect(() => {
-    // LINEアプリ内ブラウザのUAトークンは "Line/13.x" 形式
-    setIsLineBrowser(navigator.userAgent.toLowerCase().includes('line/'))
-    setDismissed(sessionStorage.getItem(DISMISS_KEY) === '1')
-  }, [])
+  // LINEアプリ内ブラウザのUAトークンは "Line/13.x" 形式。画面を出す前に1回だけ読む
+  const [isLineBrowser] = useState(() => navigator.userAgent.toLowerCase().includes('line/'))
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      return sessionStorage.getItem(DISMISS_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
 
   if (!isLineBrowser || dismissed) return null
 
   const handleDismiss = () => {
-    sessionStorage.setItem(DISMISS_KEY, '1')
+    try {
+      sessionStorage.setItem(DISMISS_KEY, '1')
+    } catch {
+      // 保存できない環境（プライベートモード等）でも、今の画面では閉じる
+    }
     setDismissed(true)
   }
 

@@ -54,6 +54,13 @@ export const reviewHistory = mysqlTable('review_history', {
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
+/** AIで下書きを作った回数（お店・月ごと）。上限の判定と月次レポートに使う */
+export const generationCounts = mysqlTable('generation_counts', {
+  tenantId: int('tenant_id').notNull(),
+  month: varchar('month', { length: 7 }).notNull(),
+  count: int('count').notNull().default(0),
+})
+
 /** 月次レポートの送信記録。同じお店・同じ月を二度送らないための UNIQUE (tenant_id, month) を持つ。 */
 export const reportDeliveries = mysqlTable('report_deliveries', {
   id: int('id').primaryKey().autoincrement(),

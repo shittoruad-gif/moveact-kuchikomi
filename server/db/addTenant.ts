@@ -26,6 +26,7 @@ const inputSchema = z.object({
     .pick({ brandName: true, logoLetter: true, footer: true, industry: true })
     .extend({
       ogImage: z.string().optional(),
+      monthlyLimit: z.number().int().positive().nullable().optional(),
       colors: tenantConfigSchema.shape.colors.partial().optional(),
       words: tenantConfigSchema.shape.words.partial().optional(),
       options: tenantConfigSchema.shape.options.partial().optional(),
