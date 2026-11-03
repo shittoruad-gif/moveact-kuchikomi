@@ -25,3 +25,6 @@ data.db-wal
 *.njsproj
 *.sln
 *.sw?
+
+# 環境変数（秘密情報）
+.env

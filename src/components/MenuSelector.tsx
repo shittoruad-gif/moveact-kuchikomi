@@ -8,14 +8,16 @@ interface MenuSelectorProps {
   menus: Menu[]
   selectedMenuIds: number[]
   onToggle: (id: number) => void
+  /** 「〇〇メニュー」の〇〇（お店ごとの設定） */
+  serviceWord: string
 }
 
-export function MenuSelector({ menus, selectedMenuIds, onToggle }: MenuSelectorProps) {
+export function MenuSelector({ menus, selectedMenuIds, onToggle, serviceWord }: MenuSelectorProps) {
   return (
     <div className="paper-card p-5 mb-5 text-left">
       <div className="step-heading">
         <span className="step-index">Step 02</span>
-        <h2 className="font-bold text-ink whitespace-nowrap">施術メニューを選択（複数可）</h2>
+        <h2 className="font-bold text-ink whitespace-nowrap">{serviceWord}メニューを選択（複数可）</h2>
         <span className="step-rule" />
       </div>
       <div className="grid md:grid-cols-2 gap-2">

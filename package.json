@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "server": "tsx watch server/index.ts",
-    "seed": "tsx server/db/seed.ts",
+    "server": "tsx watch --env-file=.env server/index.ts",
+    "seed": "tsx --env-file=.env server/db/seed.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "NODE_ENV=production tsx server/index.ts"
+    "start": "NODE_ENV=production tsx server/index.ts",
+    "migrate": "tsx server/db/migrate.ts",
+    "add-tenant": "tsx server/db/addTenant.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",

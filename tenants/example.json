@@ -1,0 +1,42 @@
+{
+  "slug": "example",
+  "hosts": ["example.kuchikomi.s-toru.com"],
+  "notifyCode": null,
+  "config": {
+    "brandName": "サンプル整骨院",
+    "logoLetter": "サ",
+    "footer": "サンプル整骨院 — 岡山県岡山市北区",
+    "industry": "整骨院",
+    "colors": {
+      "brand": "#1f4e5f",
+      "brandSoft": "#e6f0f2",
+      "primary": "#2f6f62",
+      "primaryLight": "#3c8576"
+    },
+    "words": {
+      "service": "施術",
+      "place": "院内",
+      "staff": "施術者",
+      "frequency": "通院頻度"
+    },
+    "options": {
+      "purpose": ["肩こり・首こり", "腰痛", "交通事故のケガ", "スポーツのケガ", "姿勢改善", "その他"],
+      "staff": ["丁寧な説明", "話しやすい", "技術が高い", "的確なアドバイス"],
+      "atmosphere": ["清潔感がある", "落ち着いた雰囲気", "駐車場が便利", "待ち時間が少ない"],
+      "frequency": ["初めて", "数回目", "定期的に通っている", "久しぶり"]
+    }
+  },
+  "stores": [
+    {
+      "name": "サンプル整骨院",
+      "slug": "main",
+      "address": "岡山県岡山市北区",
+      "area": "岡山市北区",
+      "googleMapsUrl": "https://g.page/r/XXXXXXXXXXXX/review"
+    }
+  ],
+  "menus": [
+    { "name": "保険施術", "slug": "hoken", "description": "健康保険を使った施術" },
+    { "name": "骨盤矯正", "slug": "kotsuban", "description": "骨盤のゆがみを整える施術" }
+  ]
+}

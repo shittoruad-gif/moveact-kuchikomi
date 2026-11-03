@@ -8,6 +8,7 @@
  *   node scripts/monthly-report.mjs                 … 先月分
  *   node scripts/monthly-report.mjs 2026-08         … 指定月
  *   node scripts/monthly-report.mjs 2026-08 --json  … JSON出力
+ *   node scripts/monthly-report.mjs 2026-08 --tenant=moveact … お店を指定（省略時は moveact）
  *
  * 接続は DATABASE_URL（MySQL）。VPS上のコンテナ内で実行する想定。
  *
@@ -19,6 +20,8 @@ import mysql from 'mysql2/promise'
 
 const arg = process.argv.slice(2).filter((a) => !a.startsWith('--'))
 const asJson = process.argv.includes('--json')
+const tenantSlug =
+  process.argv.find((a) => a.startsWith('--tenant='))?.slice('--tenant='.length) || 'moveact'
 
 function targetMonth() {
   if (arg[0] && /^\d{4}-\d{2}$/.test(arg[0])) return arg[0]
@@ -44,27 +47,34 @@ if (!url) {
 
 const conn = await mysql.createConnection(url)
 
+const [tenantRows] = await conn.query('SELECT id FROM tenants WHERE slug = ?', [tenantSlug])
+if (!tenantRows.length) {
+  console.error(`お店 ${tenantSlug} が tenants にありません`)
+  process.exit(1)
+}
+const tenantId = tenantRows[0].id
+
 const [total] = await conn.query(
   `SELECT COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS people
-     FROM review_history WHERE created_at >= ? AND created_at < ?`,
-  [from, to]
+     FROM review_history WHERE tenant_id = ? AND created_at >= ? AND created_at < ?`,
+  [tenantId, from, to]
 )
 const [byStore] = await conn.query(
   `SELECT store_name, COUNT(*) AS n
-     FROM review_history WHERE created_at >= ? AND created_at < ?
+     FROM review_history WHERE tenant_id = ? AND created_at >= ? AND created_at < ?
     GROUP BY store_name ORDER BY n DESC`,
-  [from, to]
+  [tenantId, from, to]
 )
 const [byMenu] = await conn.query(
   `SELECT menu_names, COUNT(*) AS n
-     FROM review_history WHERE created_at >= ? AND created_at < ?
+     FROM review_history WHERE tenant_id = ? AND created_at >= ? AND created_at < ?
     GROUP BY menu_names ORDER BY n DESC LIMIT 10`,
-  [from, to]
+  [tenantId, from, to]
 )
 const [prev] = await conn.query(
   `SELECT COUNT(*) AS n FROM review_history
-    WHERE created_at >= DATE_SUB(?, INTERVAL 1 MONTH) AND created_at < ?`,
-  [from, from]
+    WHERE tenant_id = ? AND created_at >= DATE_SUB(?, INTERVAL 1 MONTH) AND created_at < ?`,
+  [tenantId, from, from]
 )
 // 同意チェックが正しく機能しているか（ステマ規制対応の証跡）
 const [consent] = await conn.query(
@@ -73,8 +83,8 @@ const [consent] = await conn.query(
       SUM(is_not_related) AS not_related,
       SUM(agreed_to_terms) AS agreed,
       COUNT(*) AS n
-     FROM review_history WHERE created_at >= ? AND created_at < ?`,
-  [from, to]
+     FROM review_history WHERE tenant_id = ? AND created_at >= ? AND created_at < ?`,
+  [tenantId, from, to]
 )
 
 await conn.end()
@@ -84,6 +94,7 @@ const p = prev[0]
 const c = consent[0]
 const diff = t.n - p.n
 const report = {
+  tenant: tenantSlug,
   month,
   drafts: t.n,
   people: t.people,
@@ -105,7 +116,7 @@ if (asJson) {
 }
 
 const jp = (n) => Number(n).toLocaleString()
-console.log(`\n口コミ作成アプリ ${month} のご利用状況\n${'─'.repeat(44)}`)
+console.log(`\n口コミ作成アプリ（${tenantSlug}）${month} のご利用状況\n${'─'.repeat(44)}`)
 console.log(`下書きが作られた回数        ${jp(t.n)} 件`)
 console.log(`ご利用いただいた人数        ${jp(t.people)} 人`)
 console.log(`前月（${jp(p.n)}件）との差   ${diff >= 0 ? '＋' : ''}${jp(diff)} 件`)

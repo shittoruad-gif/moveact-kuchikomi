@@ -1,8 +1,11 @@
 import mysql from 'mysql2/promise'
 import { drizzle } from 'drizzle-orm/mysql2'
 import * as schema from './schema'
+import { migrate } from './migrate'
 
+// 開発用。Moveact（tenant_id=1）の店舗・メニューを入れる。ほかのお店は npm run add-tenant で足す
 async function seed() {
+  await migrate(process.env.DATABASE_URL!)
   const pool = mysql.createPool(process.env.DATABASE_URL!)
   const db = drizzle(pool, { schema, mode: 'default' })
 

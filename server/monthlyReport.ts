@@ -10,14 +10,17 @@
  *   しっとる通知ハブ（shittoru-notify-hub）経由で、お客様の公式LINEへ届く。
  *   このアプリはLINEのトークンを持たない。持つとお客様が増えるたびに
  *   アプリごとの設定が必要になるため、宛先の管理はハブに寄せている。
- *   NOTIFY_HUB_URL / NOTIFY_HUB_KEY / NOTIFY_CODE が揃ったときだけ動く。
+ *   お店ごとに tenants.notify_code（ハブのご契約コード）を持ち、
+ *   NOTIFY_HUB_URL / NOTIFY_HUB_KEY と notify_code が揃ったお店だけ送る。
+ *   Moveact は 2026-10-01 三上様指示で止めている（notify_code が空）。
  *
  * 二重送信の防止:
- *   report_deliveries に (month) を UNIQUE で入れてから送る。
- *   サーバーが再起動しても、同じ月を二度送らない。
+ *   report_deliveries に (tenant_id, month) を UNIQUE で入れてから送る。
+ *   サーバーが再起動しても、同じお店の同じ月を二度送らない。
  */
 import { db } from './db'
 import { sql } from 'drizzle-orm'
+import { listTenants, type Tenant } from './tenant'
 
 const TZ_OFFSET_MS = 9 * 60 * 60 * 1000 // JST
 
@@ -52,23 +55,23 @@ export type Report = {
   consent: { checked: number; realExperience: number; notRelated: number }
 }
 
-export async function buildReport(month: string): Promise<Report> {
+export async function buildReport(tenantId: number, month: string): Promise<Report> {
   const { from, to } = monthRange(month)
   const one = async (q: any) => (await db.execute(q)) as any
 
   const total = await one(sql`SELECT COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS people
-    FROM review_history WHERE created_at >= ${from} AND created_at < ${to}`)
+    FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}`)
   const prev = await one(sql`SELECT COUNT(*) AS n FROM review_history
-    WHERE created_at >= DATE_SUB(${from}, INTERVAL 1 MONTH) AND created_at < ${from}`)
+    WHERE tenant_id = ${tenantId} AND created_at >= DATE_SUB(${from}, INTERVAL 1 MONTH) AND created_at < ${from}`)
   const byStore = await one(sql`SELECT store_name AS name, COUNT(*) AS n
-    FROM review_history WHERE created_at >= ${from} AND created_at < ${to}
+    FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}
     GROUP BY store_name ORDER BY n DESC`)
   const byMenu = await one(sql`SELECT menu_names AS name, COUNT(*) AS n
-    FROM review_history WHERE created_at >= ${from} AND created_at < ${to}
+    FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}
     GROUP BY menu_names ORDER BY n DESC LIMIT 5`)
   const consent = await one(sql`SELECT COUNT(*) AS n,
       SUM(confirmed_real_experience) AS real_exp, SUM(is_not_related) AS not_related
-    FROM review_history WHERE created_at >= ${from} AND created_at < ${to}`)
+    FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}`)
 
   const rows = (r: any) => (Array.isArray(r) ? (Array.isArray(r[0]) ? r[0] : r) : [])
   const t = rows(total)[0] ?? { n: 0, people: 0 }
@@ -133,12 +136,11 @@ export function formatForLine(r: Report): string {
  * アプリごと・お客様ごとの設定が必要になり、工数が積み上がる。
  * ハブに「どのご契約（code）へ」だけ伝えれば、宛先はハブが知っている。
  */
-async function pushLine(text: string, dedupeKey: string): Promise<boolean> {
+async function pushLine(code: string, text: string, dedupeKey: string): Promise<boolean> {
   const url = process.env.NOTIFY_HUB_URL
   const key = process.env.NOTIFY_HUB_KEY
-  const code = process.env.NOTIFY_CODE
-  if (!url || !key || !code) {
-    console.log('[MonthlyReport] 通知ハブの設定が無いため送信をスキップ（NOTIFY_HUB_URL / NOTIFY_HUB_KEY / NOTIFY_CODE）')
+  if (!url || !key) {
+    console.log('[MonthlyReport] 通知ハブの設定が無いため送信をスキップ（NOTIFY_HUB_URL / NOTIFY_HUB_KEY）')
     return false
   }
   const res = await fetch(`${url.replace(/\/$/, '')}/notify`, {
@@ -155,9 +157,11 @@ async function pushLine(text: string, dedupeKey: string): Promise<boolean> {
 }
 
 /** 同じ月を二度送らないための記録。先に入れてから送る。 */
-async function claimMonth(month: string): Promise<boolean> {
+async function claimMonth(tenantId: number, month: string): Promise<boolean> {
   try {
-    await db.execute(sql`INSERT INTO report_deliveries (month, sent_at) VALUES (${month}, NOW())`)
+    await db.execute(
+      sql`INSERT INTO report_deliveries (tenant_id, month, sent_at) VALUES (${tenantId}, ${month}, NOW())`,
+    )
     return true
   } catch {
     return false // UNIQUE制約に当たった＝送信済み
@@ -172,37 +176,56 @@ async function claimMonth(month: string): Promise<boolean> {
  * スケジューラが動いて、8月分がこの状態になった。
  * 記録は「二重送信を防ぐための一時的な予約」であって、成功の証ではない。
  */
-async function releaseMonth(month: string) {
-  await db.execute(sql`DELETE FROM report_deliveries WHERE month = ${month}`)
+async function releaseMonth(tenantId: number, month: string) {
+  await db.execute(sql`DELETE FROM report_deliveries WHERE tenant_id = ${tenantId} AND month = ${month}`)
 }
 
-async function markSent(month: string) {
-  await db.execute(sql`UPDATE report_deliveries SET status = 'sent' WHERE month = ${month}`)
+async function markSent(tenantId: number, month: string) {
+  await db.execute(
+    sql`UPDATE report_deliveries SET status = 'sent' WHERE tenant_id = ${tenantId} AND month = ${month}`,
+  )
+}
+
+/** 1つのお店の月次レポートを送る */
+async function runForTenant(tenant: Tenant, month: string, force: boolean) {
+  const label = `${tenant.slug} ${month}`
+  // 送り先が無いお店は予約も入れない（あとで notify_code を入れたら、その月から送れるように）
+  if (!tenant.notifyCode) return { tenant: tenant.slug, skipped: true, month }
+  if (!force) {
+    const claimed = await claimMonth(tenant.id, month)
+    if (!claimed) {
+      console.log(`[MonthlyReport] ${label} は送信済みのためスキップ`)
+      return { tenant: tenant.slug, skipped: true, month }
+    }
+  }
+  const report = await buildReport(tenant.id, month)
+  const text = formatForLine(report)
+  const ok = await pushLine(tenant.notifyCode, text, `kuchikomi:${tenant.slug}:${month}`)
+  if (!force) {
+    if (ok) await markSent(tenant.id, month)
+    else await releaseMonth(tenant.id, month) // 次のティックでやり直す
+  }
+  console.log(`[MonthlyReport] ${label} 下書き${report.drafts}件 送信=${ok ? '成功' : '未送信'}`)
+  return { tenant: tenant.slug, skipped: false, month, sent: ok, drafts: report.drafts }
 }
 
 /**
- * 月次レポートを送る。毎月1日の朝に呼ばれる。
+ * 月次レポートを、送り先（notify_code）のあるお店すべてに送る。毎月1日の朝に呼ばれる。
+ * 1つのお店で失敗しても、ほかのお店は送る。
  * @param opts.month 明示指定（省略時は前月）
  * @param opts.force 送信済みでも送る（手動の再送用）
  */
 export async function runMonthlyReport(opts: { month?: string; force?: boolean } = {}) {
   const month = opts.month ?? targetMonth()
-  if (!opts.force) {
-    const claimed = await claimMonth(month)
-    if (!claimed) {
-      console.log(`[MonthlyReport] ${month} は送信済みのためスキップ`)
-      return { skipped: true, month }
+  const results = []
+  for (const tenant of await listTenants()) {
+    try {
+      results.push(await runForTenant(tenant, month, !!opts.force))
+    } catch (e) {
+      console.error(`[MonthlyReport] ${tenant.slug} ${month} 実行エラー`, e)
     }
   }
-  const report = await buildReport(month)
-  const text = formatForLine(report)
-  const ok = await pushLine(text, `kuchikomi:${month}`)
-  if (!opts.force) {
-    if (ok) await markSent(month)
-    else await releaseMonth(month) // 次のティックでやり直す
-  }
-  console.log(`[MonthlyReport] ${month} 下書き${report.drafts}件 送信=${ok ? '成功' : '未送信'}`)
-  return { skipped: false, month, sent: ok, drafts: report.drafts }
+  return results
 }
 
 /**

@@ -7,7 +7,8 @@ export default defineConfig({
   server: {
     port: 5174,
     proxy: {
-      '/trpc': 'http://localhost:3001',
+      // Host をそのまま渡す（どのお店かをドメインで決めているため。例：http://example.localhost:5174）
+      '/trpc': { target: 'http://localhost:3001', changeOrigin: false },
     },
   },
 })

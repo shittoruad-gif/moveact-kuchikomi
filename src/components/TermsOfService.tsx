@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Shield, ChevronDown, ChevronUp } from 'lucide-react'
 
-export function TermsOfService() {
+export function TermsOfService({ serviceWord }: { serviceWord: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -26,7 +26,7 @@ export function TermsOfService() {
           <div>
             <h3 className="font-serif font-bold mb-1 text-ink">利用規約</h3>
             <ul className="list-disc pl-5 space-y-1 marker:text-ink-soft">
-              <li>本ツールは、実際に施術を受けた方のみがご利用いただけます</li>
+              <li>本ツールは、実際に{serviceWord}を受けた方のみがご利用いただけます</li>
               <li>虚偽の内容を含む口コミの投稿は禁止されています</li>
               <li>店舗関係者（スタッフ、家族、取引先など）による利用は禁止されています</li>
               <li className="font-bold text-danger">
