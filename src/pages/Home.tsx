@@ -12,6 +12,10 @@ import { ThankYouCard } from '../components/ThankYouCard'
 import { ReviewHistory } from '../components/ReviewHistory'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { SATISFACTION_OPTIONS, type TenantConfig } from '../../shared/tenantConfig'
+import { normalizeSource } from '../../shared/source'
+
+// どこから開いたか（店頭QR／お礼メッセージ）。画面を開いたときのURLで決まる
+const SOURCE = normalizeSource(new URLSearchParams(window.location.search).get('via'))
 
 function getVisitorId(): string {
   const key = 'moveact-visitor-id'
@@ -197,6 +201,7 @@ function HomeForm({ config }: { config: TenantConfig }) {
           agreedToTerms: 1,
           confirmedRealExperience: 1,
           isNotRelated: 1,
+          source: SOURCE,
         },
         { onSuccess: () => historyQuery.refetch() }
       )

@@ -3,6 +3,7 @@ import { TRPCError } from '@trpc/server'
 import { router, publicProcedure } from '../trpc'
 import { db } from '../db'
 import { reviewHistory, stores } from '../db/schema'
+import { SOURCES } from '../../shared/source'
 import { eq, and, desc } from 'drizzle-orm'
 
 export const historyRouter = router({
@@ -18,6 +19,8 @@ export const historyRouter = router({
         agreedToTerms: z.number(),
         confirmedRealExperience: z.number(),
         isNotRelated: z.number(),
+        // 古い画面（キャッシュ）からは来ないので省略可
+        source: z.enum(SOURCES).optional(),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -28,7 +31,12 @@ export const historyRouter = router({
         .where(and(eq(stores.id, input.storeId), eq(stores.tenantId, ctx.tenant.id)))
       if (!store) throw new TRPCError({ code: 'BAD_REQUEST', message: '店舗が見つかりません' })
       // 店名は月次レポートの集計に使うので、画面からの値ではなくDBの値を入れる
-      return db.insert(reviewHistory).values({ ...input, storeName: store.name, tenantId: ctx.tenant.id })
+      return db.insert(reviewHistory).values({
+        ...input,
+        source: input.source ?? 'direct',
+        storeName: store.name,
+        tenantId: ctx.tenant.id,
+      })
     }),
 
   list: publicProcedure

@@ -22,6 +22,7 @@ import { db } from './db'
 import { sql, type SQL } from 'drizzle-orm'
 import { listTenants, type Tenant } from './tenant'
 import { getGenerationCount } from './generationCount'
+import { SOURCE_LABELS, normalizeSource } from '../shared/source'
 
 const TZ_OFFSET_MS = 9 * 60 * 60 * 1000 // JST
 
@@ -55,6 +56,8 @@ export type Report = {
   prevDrafts: number
   byStore: { name: string; n: number }[]
   byMenu: { name: string; n: number }[]
+  /** どこから開いたか（店頭QR／お礼メッセージ／その他）。記録が始まる前の行は数えない */
+  bySource: { name: string; n: number }[]
   consent: { checked: number; realExperience: number; notRelated: number }
 }
 
@@ -77,6 +80,10 @@ export async function buildReport(tenantId: number, month: string): Promise<Repo
   const byMenu = await one(sql`SELECT menu_names AS name, COUNT(*) AS n
     FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}
     GROUP BY menu_names ORDER BY n DESC LIMIT 5`)
+  const bySource = await one(sql`SELECT source, COUNT(*) AS n
+    FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}
+      AND source <> ''
+    GROUP BY source ORDER BY n DESC`)
   const consent = await one(sql`SELECT COUNT(*) AS n,
       SUM(confirmed_real_experience) AS real_exp, SUM(is_not_related) AS not_related
     FROM review_history WHERE tenant_id = ${tenantId} AND created_at >= ${from} AND created_at < ${to}`)
@@ -93,6 +100,7 @@ export async function buildReport(tenantId: number, month: string): Promise<Repo
     prevDrafts: Number(p.n ?? 0),
     byStore: byStore.map((r) => ({ name: String(r.name), n: Number(r.n) })),
     byMenu: byMenu.map((r) => ({ name: String(r.name), n: Number(r.n) })),
+    bySource: bySource.map((r) => ({ name: SOURCE_LABELS[normalizeSource(String(r.source))], n: Number(r.n) })),
     consent: {
       checked: Number(c.n ?? 0),
       realExperience: Number(c.real_exp ?? 0),
@@ -120,6 +128,11 @@ export function formatForLine(r: Report): string {
     lines.push('')
     lines.push('【店舗別】')
     for (const s of r.byStore) lines.push(`・${s.name}\u3000${jp(s.n)}件`)
+  }
+  if (r.bySource.length) {
+    lines.push('')
+    lines.push('【どこから開かれたか】')
+    for (const s of r.bySource) lines.push(`・${s.name}\u3000${jp(s.n)}件`)
   }
   if (r.byMenu.length) {
     lines.push('')

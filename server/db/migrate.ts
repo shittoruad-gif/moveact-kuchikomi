@@ -10,6 +10,7 @@
  *   4. report_deliveries の UNIQUE を (month) から (tenant_id, month) に付け替える
  *      （お店が2つになると同じ月の記録が2行要るため。消えるのは索引だけで、行は残る）
  *   5. AIで下書きを作った回数を数える generation_counts を作る
+ *   6. review_history に source（どこから開いたか。既定値は空）を足す
  *
  * サーバーの起動時に毎回呼ばれる（server/index.ts）。済んでいれば何もしない。
  * 古いコードのままでもこの後の形で動く（tenant_id は既定値で埋まる）ので、
@@ -124,6 +125,12 @@ export async function migrate(url: string) {
       count int NOT NULL DEFAULT 0,
       PRIMARY KEY (tenant_id, month)
     ) DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`)
+
+    // 6. どこから開いたか
+    if (!(await hasColumn('review_history', 'source'))) {
+      await q("ALTER TABLE review_history ADD COLUMN source varchar(16) NOT NULL DEFAULT ''")
+      step('review_history に source を足しました')
+    }
 
     step('完了')
   } finally {

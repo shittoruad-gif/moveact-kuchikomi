@@ -51,6 +51,8 @@ export const reviewHistory = mysqlTable('review_history', {
   agreedToTerms: tinyint('agreed_to_terms').notNull().default(0),
   confirmedRealExperience: tinyint('confirmed_real_experience').notNull().default(0),
   isNotRelated: tinyint('is_not_related').notNull().default(0),
+  /** どこから開いたか（shared/source.ts）。移行前の行は空 */
+  source: varchar('source', { length: 16 }).notNull().default(''),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 

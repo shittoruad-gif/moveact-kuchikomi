@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "start": "NODE_ENV=production tsx server/index.ts",
     "migrate": "tsx server/db/migrate.ts",
-    "add-tenant": "tsx server/db/addTenant.ts"
+    "add-tenant": "tsx server/db/addTenant.ts",
+    "thanks-message": "tsx server/thanksMessage.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
