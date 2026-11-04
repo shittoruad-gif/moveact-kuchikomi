@@ -187,7 +187,6 @@ const body = [
 
   // 署名欄は keepNext で1ページにまとめる（乙の欄だけ次のページへ送られないように）
   para('本契約締結の証として本契約書2通を作成し、甲乙記名押印のうえ、各1通を保有する。', { after: 200, keepNext: true }),
-  para('契約締結日：　　　　年　　　月　　　日', { after: 200, keepNext: true }),
   para('〈　甲　〉', { keepNext: true }),
   para('　住　　所：岡山県岡山市北区本町6-36　第一セントラルビル4階', { keepNext: true }),
   para('　会 社 名：株式会社しっとる', { keepNext: true }),
