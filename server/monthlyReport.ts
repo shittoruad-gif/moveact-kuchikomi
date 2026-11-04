@@ -119,10 +119,11 @@ export function formatForLine(r: Report): string {
   const lines: string[] = []
   lines.push(`${y}年${Number(m)}月のご利用状況`)
   lines.push('')
-  lines.push(`口コミの下書きが ${jp(r.drafts)}件 つくられました`)
-  lines.push(`（AIで案を作った回数は ${jp(r.generations)}回）`)
+  // 言葉は契約書第7条第4号に合わせる（「下書きが作られた件数」とは書かない）
+  lines.push(`AIで下書きを作った回数 ${jp(r.generations)}回`)
+  lines.push(`Googleマップの投稿画面へ進んだ件数 ${jp(r.drafts)}件`)
+  lines.push(`（前月 ${jp(r.prevDrafts)}件から ${sign}${jp(Math.abs(diff))}件）`)
   lines.push(`ご利用いただいた方 ${jp(r.people)}人`)
-  lines.push(`前月（${jp(r.prevDrafts)}件）から ${sign}${jp(Math.abs(diff))}件`)
 
   if (r.byStore.length > 1) {
     lines.push('')
@@ -146,7 +147,7 @@ export function formatForLine(r: Report): string {
     lines.push(`関係者でないことの確認 ${jp(r.consent.notRelated)}/${jp(r.consent.checked)}`)
   }
   lines.push('')
-  lines.push('※ この数字は「下書きがつくられた回数」です。実際にGoogleマップへ投稿されたかどうかは、こちらでは分かりません。投稿数はGoogleビジネスプロフィールでご確認ください。')
+  lines.push('※ 分かるのは、Googleマップの投稿画面へ進んだ件数までです。実際に投稿されたかどうかは、こちらでは分かりません。投稿数はGoogleビジネスプロフィールでご確認ください。')
 
   return lines.join('\n')
 }
@@ -212,7 +213,8 @@ async function markSent(tenantId: number, month: string) {
 async function runForTenant(tenant: Tenant, month: string, force: boolean) {
   const label = `${tenant.slug} ${month}`
   // 送り先が無いお店は予約も入れない（あとで notify_code を入れたら、その月から送れるように）
-  if (!tenant.notifyCode) return { tenant: tenant.slug, skipped: true, month }
+  // 解約で提供を終えたお店にも送らない
+  if (!tenant.notifyCode || tenant.ended) return { tenant: tenant.slug, skipped: true, month }
   if (!force) {
     const claimed = await claimMonth(tenant.id, month)
     if (!claimed) {
@@ -227,7 +229,7 @@ async function runForTenant(tenant: Tenant, month: string, force: boolean) {
     if (ok) await markSent(tenant.id, month)
     else await releaseMonth(tenant.id, month) // 次のティックでやり直す
   }
-  console.log(`[MonthlyReport] ${label} 下書き${report.drafts}件 送信=${ok ? '成功' : '未送信'}`)
+  console.log(`[MonthlyReport] ${label} 投稿画面へ${report.drafts}件 送信=${ok ? '成功' : '未送信'}`)
   return { tenant: tenant.slug, skipped: false, month, sent: ok, drafts: report.drafts }
 }
 

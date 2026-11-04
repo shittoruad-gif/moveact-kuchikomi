@@ -16,6 +16,8 @@ export const tenants = mysqlTable('tenants', {
   config: text('config').notNull(),
   /** しっとる通知ハブのご契約コード。空なら月次レポートは送らない */
   notifyCode: varchar('notify_code', { length: 64 }),
+  /** 解約により提供を終えた日時（契約書第10条第3項）。入っていればアプリは使えない */
+  endedAt: datetime('ended_at'),
   createdAt: datetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 

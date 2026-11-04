@@ -12,7 +12,7 @@
  *
  * 接続は DATABASE_URL（MySQL）。VPS上のコンテナ内で実行する想定。
  *
- * ※ 正直に書くこと: このアプリで分かるのは「下書きが何件つくられたか」まで。
+ * ※ 正直に書くこと: このアプリで分かるのは「Googleマップの投稿画面へ何件進んだか」まで。
  *   実際にGoogleマップへ投稿されたかは、こちらからは分かりません（Google側の仕様）。
  *   レポートにもその旨を必ず書くこと。
  */
@@ -117,7 +117,7 @@ if (asJson) {
 
 const jp = (n) => Number(n).toLocaleString()
 console.log(`\n口コミ作成アプリ（${tenantSlug}）${month} のご利用状況\n${'─'.repeat(44)}`)
-console.log(`下書きが作られた回数        ${jp(t.n)} 件`)
+console.log(`投稿画面へ進んだ件数        ${jp(t.n)} 件`)
 console.log(`ご利用いただいた人数        ${jp(t.people)} 人`)
 console.log(`前月（${jp(p.n)}件）との差   ${diff >= 0 ? '＋' : ''}${jp(diff)} 件`)
 
@@ -135,6 +135,6 @@ console.log(`  店舗関係者でないことの確認  ${jp(c.not_related || 0)
 console.log(`  利用規約への同意            ${jp(c.agreed || 0)} / ${jp(c.n)}`)
 
 console.log(`\n${'─'.repeat(44)}`)
-console.log(`※ この数字は「下書きが作られた回数」です。`)
-console.log(`   実際にGoogleマップへ投稿されたかどうかは、こちらからは分かりません。`)
+console.log(`※ 分かるのは、Googleマップの投稿画面へ進んだ件数までです。`)
+console.log(`   実際に投稿されたかどうかは、こちらからは分かりません。`)
 console.log(`   Googleマップの口コミ件数は、店舗さまのGoogleビジネスプロフィールでご確認ください。\n`)

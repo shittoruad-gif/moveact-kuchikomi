@@ -20,6 +20,8 @@ export type Tenant = {
   hosts: string[]
   config: TenantConfig
   notifyCode: string | null
+  /** 解約により提供を終えている（契約書第10条第3項） */
+  ended: boolean
 }
 
 const CACHE_MS = 60_000
@@ -34,6 +36,7 @@ export async function listTenants(): Promise<Tenant[]> {
     hosts: r.hosts.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean),
     config: parseTenantConfig(r.config),
     notifyCode: r.notifyCode?.trim() || null,
+    ended: r.endedAt !== null,
   }))
   cache = { at: Date.now(), list }
   return list

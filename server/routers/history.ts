@@ -1,13 +1,13 @@
 import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
-import { router, publicProcedure } from '../trpc'
+import { router, publicProcedure, activeProcedure } from '../trpc'
 import { db } from '../db'
 import { reviewHistory, stores } from '../db/schema'
 import { SOURCES } from '../../shared/source'
 import { eq, and, desc } from 'drizzle-orm'
 
 export const historyRouter = router({
-  save: publicProcedure
+  save: activeProcedure
     .input(
       z.object({
         visitorId: z.string(),

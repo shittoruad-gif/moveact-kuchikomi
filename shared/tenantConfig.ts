@@ -47,8 +47,8 @@ export const tenantConfigSchema = z.object({
   /** LINE・SNSで共有したときの画像（public/ に置いたファイルのパス）。空なら出さない */
   ogImage: z.string(),
   /**
-   * 1か月にAIで下書きを作れる回数（お店全体で）。null なら上限なし。
-   * 月額に含むAI利用料の上限（手順書では月100件）を超えないようにするための設定。
+   * 1か月にAIで下書きを作れる回数（1店舗あたり）。null なら上限なし。
+   * 契約書第7条第1号「1店舗につき1か月100回」。お店全体の上限は、これ × 店舗数になる。
    * 上限に達すると、その月はお客様の画面で「作成できません」と表示される。
    */
   monthlyLimit: z.number().int().positive().nullable(),

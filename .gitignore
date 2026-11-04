@@ -28,3 +28,4 @@ data.db-wal
 
 # 環境変数（秘密情報）
 .env
+qr/

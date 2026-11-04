@@ -11,6 +11,7 @@
  *      （お店が2つになると同じ月の記録が2行要るため。消えるのは索引だけで、行は残る）
  *   5. AIで下書きを作った回数を数える generation_counts を作る
  *   6. review_history に source（どこから開いたか。既定値は空）を足す
+ *   7. tenants に ended_at（解約で提供を終えた日時。既定値は空＝提供中）を足す
  *
  * サーバーの起動時に毎回呼ばれる（server/index.ts）。済んでいれば何もしない。
  * 古いコードのままでもこの後の形で動く（tenant_id は既定値で埋まる）ので、
@@ -130,6 +131,12 @@ export async function migrate(url: string) {
     if (!(await hasColumn('review_history', 'source'))) {
       await q("ALTER TABLE review_history ADD COLUMN source varchar(16) NOT NULL DEFAULT ''")
       step('review_history に source を足しました')
+    }
+
+    // 7. 解約で提供を終えた日時
+    if (!(await hasColumn('tenants', 'ended_at'))) {
+      await q('ALTER TABLE tenants ADD COLUMN ended_at datetime DEFAULT NULL')
+      step('tenants に ended_at を足しました')
     }
 
     step('完了')

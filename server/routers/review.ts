@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import OpenAI from 'openai'
 import { and, eq, inArray } from 'drizzle-orm'
-import { router, publicProcedure } from '../trpc'
+import { router, activeProcedure } from '../trpc'
 import { db } from '../db'
 import { menus, stores } from '../db/schema'
 import { NEGATIVE_SATISFACTIONS, type TenantConfig } from '../../shared/tenantConfig'
@@ -163,11 +163,16 @@ function assertRateLimit(key: string) {
 }
 
 export const reviewRouter = router({
-  generate: publicProcedure.input(generateInput).mutation(async ({ input, ctx }) => {
+  generate: activeProcedure.input(generateInput).mutation(async ({ input, ctx }) => {
     assertRateLimit(ctx.ip)
     const { config } = ctx.tenant
     const month = currentMonthJst()
-    if (config.monthlyLimit !== null && (await getGenerationCount(ctx.tenant.id, month)) >= config.monthlyLimit) {
+    // 上限は1店舗あたり（契約書第7条第1号）。お店全体では × 店舗数
+    const storeCount = config.monthlyLimit === null
+      ? 0
+      : (await db.select({ id: stores.id }).from(stores).where(eq(stores.tenantId, ctx.tenant.id))).length
+    const limit = config.monthlyLimit === null ? null : config.monthlyLimit * Math.max(storeCount, 1)
+    if (limit !== null && (await getGenerationCount(ctx.tenant.id, month)) >= limit) {
       throw new TRPCError({
         code: 'TOO_MANY_REQUESTS',
         message: '今月の作成回数の上限に達したため、いまは下書きを作れません。お手数ですが、お店のスタッフにお知らせください。',

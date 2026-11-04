@@ -53,6 +53,16 @@ export function Home() {
       </div>
     )
   }
+  if (config.ended) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-6 text-center">
+        <div>
+          <p className="font-serif text-xl font-bold text-ink mb-2">{config.brandName}</p>
+          <p className="text-sm text-ink-soft">この口コミ作成アプリは、ご利用を終了しました。</p>
+        </div>
+      </div>
+    )
+  }
   return <HomeForm config={config} />
 }
 
