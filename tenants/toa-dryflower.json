@@ -1,0 +1,90 @@
+{
+  "slug": "toa-dryflower",
+  "hosts": [
+    "toa-dryflower.kuchikomi.s-toru.com"
+  ],
+  "notifyCode": null,
+  "config": {
+    "brandName": "草花ToA",
+    "logoLetter": "草",
+    "footer": "草花ToA — 岡山県岡山市南区",
+    "industry": "小売店",
+    "monthlyLimit": 100,
+    "colors": {
+      "brand": "#1f2d50",
+      "brandSoft": "#eaedf4",
+      "primary": "#2b3d6b",
+      "primaryLight": "#3a5085"
+    },
+    "words": {
+      "service": "商品",
+      "place": "店舗",
+      "staff": "スタッフ",
+      "frequency": "来店頻度"
+    },
+    "options": {
+      "purpose": [
+        "記念日のプレゼント",
+        "開店お祝い",
+        "周年お祝い",
+        "ワークショップ",
+        "個人レッスン",
+        "ブライダルブーケ",
+        "店舗装飾",
+        "ドライフラワー花材購入",
+        "その他"
+      ],
+      "staff": [
+        "話しやすい",
+        "細かくヒアリングしてくれる",
+        "理想どおりの仕上がり",
+        "記念の花をドライフラワーに",
+        "センスが好き"
+      ],
+      "atmosphere": [
+        "ドライフラワーに癒される",
+        "珍しい花や木の実がある",
+        "駐車場が多い",
+        "ドライフラワー乾燥室がある",
+        "プリザーブドや造花もある"
+      ],
+      "frequency": [
+        "初めて",
+        "数回目",
+        "定期的に利用している",
+        "久しぶり"
+      ]
+    }
+  },
+  "stores": [
+    {
+      "name": "草花ToA",
+      "slug": "main",
+      "address": "岡山県岡山市南区藤田564-131",
+      "area": "岡山市南区藤田",
+      "googleMapsUrl": "https://g.page/r/XXXXXXXXXXXX/review"
+    }
+  ],
+  "menus": [
+    {
+      "name": "ドライフラワーギフト",
+      "slug": "gift",
+      "description": "贈る用途でデザイン"
+    },
+    {
+      "name": "ドライフラワーワークショップ",
+      "slug": "workshop",
+      "description": "毎月開催"
+    },
+    {
+      "name": "ブライダル",
+      "slug": "bridal",
+      "description": "ブーケ・ブートニア"
+    },
+    {
+      "name": "店舗装飾",
+      "slug": "decoration",
+      "description": "ドライ、プリザ、造花でデザイン"
+    }
+  ]
+}
