@@ -11,10 +11,10 @@
     "industry": "小売店",
     "monthlyLimit": 100,
     "colors": {
-      "brand": "#1f2d50",
-      "brandSoft": "#eaedf4",
-      "primary": "#2b3d6b",
-      "primaryLight": "#3a5085"
+      "brand": "#314055",
+      "brandSoft": "#ebeef3",
+      "primary": "#314055",
+      "primaryLight": "#40536e"
     },
     "words": {
       "service": "商品",
