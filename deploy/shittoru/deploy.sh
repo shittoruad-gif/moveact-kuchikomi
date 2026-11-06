@@ -10,7 +10,7 @@
 #   3. tenants/*.json（example 以外）の hosts と、仮のアドレス <slug>.163.44.103.9.sslip.io のうち、
 #      DNS がこのサーバーを向いているものを Traefik に渡す（labels.yml。1ドメイン1証明書）
 #   4. docker compose up -d（作り直すのはしっとる用のコンテナだけ）
-#   5. 引数のお店を、しっとる用DBに登録する（もうあれば飛ばす）
+#   5. 引数のお店を、しっとる用DBに登録する（もうあれば、画面の設定だけ JSON の内容に置き換える）
 #   6. 各お店のアドレスが開けるか確かめる
 #
 # 本番に出すのは三上様の承諾のあと（docs/ヒアリングから作る手順.md の手順7）。
@@ -125,8 +125,8 @@ for f in "$@"; do
     if (!t.hosts.includes(extra)) t.hosts.push(extra);
     process.stdout.write(JSON.stringify(t));
   ' "$f" "$IP" \
-  | ssh "$SERVER" "docker exec -i -w /app shittoru-kuchikomi-app-1 npx tsx server/db/addTenant.ts - --apply" \
-  || echo "（$f は登録済みか、登録できませんでした。上の表示を見てください）"
+  | ssh "$SERVER" "docker exec -i -w /app shittoru-kuchikomi-app-1 npx tsx server/db/addTenant.ts - --apply --update-config" \
+  || echo "（$f は登録できませんでした。上の表示を見てください）"
 done
 
 # --- 6. 確かめる ---

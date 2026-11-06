@@ -52,6 +52,12 @@ export const tenantConfigSchema = z.object({
    * 上限に達すると、その月はお客様の画面で「作成できません」と表示される。
    */
   monthlyLimit: z.number().int().positive().nullable(),
+  /**
+   * デモ版（導入前にお見せする用）。true のあいだは、作った文章に「デモ」の印が入り、
+   * コピー・Googleマップへの投稿ができない。お店の Google の投稿先も画面に渡さない。
+   * 本契約になったら false（または消して）流し直す。
+   */
+  demo: z.boolean().optional(),
   colors: colorsSchema,
   words: wordsSchema,
   options: optionsSchema,

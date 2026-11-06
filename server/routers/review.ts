@@ -7,6 +7,7 @@ import { db } from '../db'
 import { menus, stores } from '../db/schema'
 import { NEGATIVE_SATISFACTIONS, type TenantConfig } from '../../shared/tenantConfig'
 import { addGeneration, currentMonthJst, getGenerationCount } from '../generationCount'
+import { AVOID_WORDS, findAvoidWords, softenAvoidWords } from '../../shared/contentValidator'
 
 // 店名・地域・メニュー名は画面から受け取らず、IDからこのお店のDBの値を引く
 // （別のお店の店名で文章を作らせない）
@@ -50,6 +51,7 @@ function getClient(): OpenAI {
 }
 
 const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+const DEMO_MARK = '【デモ版のサンプルです・投稿には使えません】'
 
 // 肯定的／否定的、それぞれ3つのトーン指示。〇〇の言葉はお店ごとの設定（words）で変わる
 function positiveTones(w: TenantConfig['words']) {
@@ -79,6 +81,7 @@ function buildSystemPrompt(isNegative: boolean, config: TenantConfig): string {
     '- 太字（**）などの装飾記号は使わない',
     '- 過度な誇張、断定的な効果効能（「必ず治る」「絶対痩せる」など）は書かない',
     '- 「No.1」「日本一」など最上級・比較表現は使わない',
+    `- 次の言葉は、言葉の一部としても一切使わない（Googleの口コミで問題になるため）：${AVOID_WORDS.join('、')}`,
     '- 同業他店の批判や、スタッフ個人が特定できる氏名などは書かない',
     '- 入力にない事実を創作しない',
     isNegative
@@ -115,7 +118,27 @@ function buildUserPrompt(input: PromptInput, w: TenantConfig['words'], toneInstr
   return lines.join('\n')
 }
 
+// 使わせない言葉が混ざったら、その言葉を示して2回まで書き直させる。それでも残れば穏やかな言い方に置き換える
 async function generateOne(
+  client: OpenAI,
+  systemPrompt: string,
+  userPrompt: string,
+): Promise<string> {
+  let text = await complete(client, systemPrompt, userPrompt)
+  for (let i = 0; i < 2 && text; i++) {
+    const hits = findAvoidWords(text)
+    if (!hits.length) return text
+    const retry = await complete(
+      client,
+      systemPrompt,
+      `${userPrompt}\n\n【書き直し】次の下書きには使えない言葉（${hits.join('、')}）が入っています。内容と長さはそのままに、これらの言葉を一切使わずに自然な言い方へ書き直してください。\n\n${text}`,
+    )
+    if (retry) text = retry
+  }
+  return findAvoidWords(text).length ? softenAvoidWords(text) : text
+}
+
+async function complete(
   client: OpenAI,
   systemPrompt: string,
   userPrompt: string,
@@ -207,7 +230,10 @@ export const reviewRouter = router({
           generateOne(client, systemPrompt, buildUserPrompt(promptInput, config.words, tone)),
         ),
       )
-      const cleaned = variations.map((v) => v || '口コミの生成に失敗しました。もう一度お試しください。')
+      const cleaned = variations
+        .map((v) => v || '口コミの生成に失敗しました。もう一度お試しください。')
+        // デモ版は、文章そのものに印を入れる（画面を通さずに使われても、そのまま投稿できないように）
+        .map((v) => (config.demo ? `${DEMO_MARK}\n${v}\n${DEMO_MARK}` : v))
       // 数え損ねても、お客様の下書きは返す
       await addGeneration(ctx.tenant.id, month).catch((e) => console.error('[review.generate] 回数の記録に失敗', e))
       return { variations: cleaned }
