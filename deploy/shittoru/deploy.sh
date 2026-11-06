@@ -47,7 +47,7 @@ echo "ドメイン: $HOSTS"
 # --- 1. compose.yml / set-key.sh / .env を置く ---
 ssh "$SERVER" "mkdir -p $DIR && chmod 700 $DIR"
 scp -q deploy/shittoru/compose.yml deploy/shittoru/set-key.sh "$SERVER:$DIR/"
-ssh "$SERVER" bash -s -- "$DIR" "$TAG" "$RULE" "$FIRST_SLUG" <<'REMOTE'
+ssh "$SERVER" "bash -s -- $(printf '%q ' "$DIR" "$TAG" "$RULE" "$FIRST_SLUG")" <<'REMOTE'
 set -euo pipefail
 DIR=$1; TAG=$2; RULE=$3; FIRST=$4
 cd "$DIR"; chmod 700 set-key.sh
