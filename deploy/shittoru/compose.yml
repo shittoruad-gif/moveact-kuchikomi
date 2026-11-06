@@ -1,0 +1,57 @@
+# しっとる用の口コミアプリ（Moveact のアプリ・DBとは別）。
+# サーバーの /opt/shittoru-kuchikomi に置いて動かす。deploy.sh が配る。
+# ドメインは .env の TRAEFIK_RULE で決める（deploy.sh が tenants/*.json から作る）。
+name: shittoru-kuchikomi
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: shittoru_kuchikomi
+      MYSQL_USER: kuchikomi
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 30
+
+  app:
+    image: shittoru-kuchikomi:${APP_TAG}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://kuchikomi:${DB_PASSWORD}@db:3306/shittoru_kuchikomi
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      PORT: "3001"
+      DEFAULT_TENANT: ${DEFAULT_TENANT}
+      NOTIFY_HUB_URL: ${NOTIFY_HUB_URL:-}
+      NOTIFY_HUB_KEY: ${NOTIFY_HUB_KEY:-}
+    networks: [internal, coolify]
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: coolify
+      traefik.http.routers.shittoru-kuchikomi.rule: ${TRAEFIK_RULE}
+      traefik.http.routers.shittoru-kuchikomi.entrypoints: https
+      traefik.http.routers.shittoru-kuchikomi.tls: "true"
+      traefik.http.routers.shittoru-kuchikomi.tls.certresolver: letsencrypt
+      traefik.http.routers.shittoru-kuchikomi-http.rule: ${TRAEFIK_RULE}
+      traefik.http.routers.shittoru-kuchikomi-http.entrypoints: http
+      traefik.http.routers.shittoru-kuchikomi-http.middlewares: shittoru-kuchikomi-https
+      traefik.http.middlewares.shittoru-kuchikomi-https.redirectscheme.scheme: https
+      traefik.http.services.shittoru-kuchikomi.loadbalancer.server.port: "3001"
+
+volumes:
+  db:
+
+networks:
+  internal:
+  coolify:
+    external: true
