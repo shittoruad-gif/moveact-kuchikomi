@@ -314,7 +314,7 @@ function HomeForm({ config }: { config: TenantConfig }) {
               multiple
               freeText={purposeText}
               onFreeTextChange={(v) => setPurposeText(v.slice(0, 100))}
-              freeTextPlaceholder="ご自身の言葉でも入力できます（例：デスクワークで背中が重くて…）"
+              freeTextPlaceholder={config.words.service === '施術' ? 'ご自身の言葉でも入力できます（例：デスクワークで背中が重くて…）' : 'ご自身の言葉でも入力できます（任意）'}
             />
 
             <TagSelector
