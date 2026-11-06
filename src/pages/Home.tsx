@@ -255,6 +255,11 @@ function HomeForm({ config }: { config: TenantConfig }) {
   return (
     <div className="min-h-screen">
       <div className="max-w-4xl mx-auto px-4 py-10 sm:py-14">
+        {config.demo && (
+          <div className="mb-6 rounded-md border border-warn bg-warn-soft px-4 py-2 text-sm text-warn text-center">
+            デモ版です。実際の画面の流れをお試しいただけます（投稿はできません）。
+          </div>
+        )}
         {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-3">
@@ -309,7 +314,7 @@ function HomeForm({ config }: { config: TenantConfig }) {
               multiple
               freeText={purposeText}
               onFreeTextChange={(v) => setPurposeText(v.slice(0, 100))}
-              freeTextPlaceholder="ご自身の言葉でも入力できます（例：デスクワークで背中が重くて…）"
+              freeTextPlaceholder={config.words.service === '施術' ? 'ご自身の言葉でも入力できます（例：デスクワークで背中が重くて…）' : 'ご自身の言葉でも入力できます（任意）'}
             />
 
             <TagSelector
@@ -379,6 +384,7 @@ function HomeForm({ config }: { config: TenantConfig }) {
                 variations={variations}
                 googleMapsUrl={selectedStore.googleMapsUrl}
                 onGoogleMapsOpen={handleGoogleMapsOpen}
+                demo={!!config.demo}
               />
             )}
 
