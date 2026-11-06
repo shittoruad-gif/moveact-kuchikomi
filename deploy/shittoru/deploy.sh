@@ -7,7 +7,8 @@
 # やること:
 #   1. サーバーの /opt/shittoru-kuchikomi に compose.yml と .env を置く（.env の秘密の値は初回だけ作り、以後は残す）
 #   2. 今の HEAD のコードを git archive で送り、サーバーでイメージを作る
-#   3. tenants/*.json（example 以外）の hosts と、仮のアドレス <slug>.163.44.103.9.sslip.io を Traefik に渡す
+#   3. tenants/*.json（example 以外）の hosts と、仮のアドレス <slug>.163.44.103.9.sslip.io のうち、
+#      DNS がこのサーバーを向いているものを Traefik に渡す（labels.yml。1ドメイン1証明書）
 #   4. docker compose up -d（作り直すのはしっとる用のコンテナだけ）
 #   5. 引数のお店を、しっとる用DBに登録する（もうあれば飛ばす）
 #   6. 各お店のアドレスが開けるか確かめる
@@ -39,17 +40,46 @@ HOSTS=$(node -e '
   }
   console.log([...new Set(out.map((h) => h.trim().toLowerCase()))].join(" "));
 ' "$IP" "${TENANT_FILES[@]}")
-RULE=$(for h in $HOSTS; do printf 'Host(`%s`) || ' "$h"; done | sed 's/ || $//')
+# DNS がまだこのサーバーを向いていないドメインは、証明書の取得に失敗し続ける
+# （Let's Encrypt の失敗回数の上限に当たる）ので、向いてから足す
+LIVE=""; WAIT=""
+for h in $HOSTS; do
+  if [ "$(dig +short "$h" A | tail -1)" = "$IP" ]; then LIVE="$LIVE $h"; else WAIT="$WAIT $h"; fi
+done
+LABELS=$(mktemp)
+{
+  echo "services:"
+  echo "  app:"
+  echo "    labels:"
+  echo "      traefik.enable: \"true\""
+  echo "      traefik.docker.network: coolify"
+  echo "      traefik.http.services.shittoru-kuchikomi.loadbalancer.server.port: \"3001\""
+  echo "      traefik.http.middlewares.shittoru-kuchikomi-https.redirectscheme.scheme: https"
+  for h in $LIVE; do
+    r="shittoru-kuchikomi-$(echo "$h" | tr '.' '-')"
+    echo "      traefik.http.routers.$r.rule: Host(\`$h\`)"
+    echo "      traefik.http.routers.$r.entrypoints: https"
+    echo "      traefik.http.routers.$r.tls: \"true\""
+    echo "      traefik.http.routers.$r.tls.certresolver: letsencrypt"
+    echo "      traefik.http.routers.$r.service: shittoru-kuchikomi"
+    echo "      traefik.http.routers.$r-http.rule: Host(\`$h\`)"
+    echo "      traefik.http.routers.$r-http.entrypoints: http"
+    echo "      traefik.http.routers.$r-http.middlewares: shittoru-kuchikomi-https"
+    echo "      traefik.http.routers.$r-http.service: shittoru-kuchikomi"
+  done
+} > "$LABELS"
 FIRST_SLUG=$(node -p 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8")).slug' "${TENANT_FILES[0]}")
 echo "コード: $TAG"
-echo "ドメイン: $HOSTS"
+echo "公開するドメイン:${LIVE:- なし}"
+[ -z "$WAIT" ] || echo "DNS待ちで今回は出さないドメイン:$WAIT（DNSを向けたら、もう一度このスクリプトを流す）"
 
 # --- 1. compose.yml / set-key.sh / .env を置く ---
 ssh "$SERVER" "mkdir -p $DIR && chmod 700 $DIR"
 scp -q deploy/shittoru/compose.yml deploy/shittoru/set-key.sh "$SERVER:$DIR/"
-ssh "$SERVER" "bash -s -- $(printf '%q ' "$DIR" "$TAG" "$RULE" "$FIRST_SLUG")" <<'REMOTE'
+scp -q "$LABELS" "$SERVER:$DIR/labels.yml"; rm -f "$LABELS"
+ssh "$SERVER" "bash -s -- $(printf '%q ' "$DIR" "$TAG" "$FIRST_SLUG")" <<'REMOTE'
 set -euo pipefail
-DIR=$1; TAG=$2; RULE=$3; FIRST=$4
+DIR=$1; TAG=$2; FIRST=$3
 cd "$DIR"; chmod 700 set-key.sh
 touch .env; chmod 600 .env
 get() { grep -E "^$1=" .env | head -1 | cut -d= -f2- || true; }
@@ -65,7 +95,6 @@ DEF=$(get DEFAULT_TENANT);   [ -n "$DEF" ] || DEF=$FIRST
   echo "NOTIFY_HUB_KEY=$(get NOTIFY_HUB_KEY)"
   echo "DEFAULT_TENANT=$DEF"
   echo "APP_TAG=$TAG"
-  echo "TRAEFIK_RULE='$RULE'"
 } > .env.new
 mv .env.new .env; chmod 600 .env
 REMOTE
@@ -79,7 +108,7 @@ else
 fi
 
 # --- 4. 起動（しっとる用のコンテナだけ） ---
-ssh "$SERVER" "cd $DIR && docker compose up -d --remove-orphans"
+ssh "$SERVER" "cd $DIR && docker compose -f compose.yml -f labels.yml up -d --remove-orphans"
 echo "起動を待っています"
 for i in $(seq 1 60); do
   if ssh "$SERVER" "docker logs shittoru-kuchikomi-app-1 2>&1 | grep -q 'migrate\] 完了'"; then break; fi
@@ -101,7 +130,7 @@ done
 
 # --- 6. 確かめる ---
 sleep 5
-for h in $HOSTS; do
+for h in $LIVE; do
   code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "https://$h/" || true)
   title=$(curl -s --max-time 20 "https://$h/" | grep -o '<title>[^<]*' | sed 's/<title>//' || true)
   echo "https://$h/  →  $code  $title"

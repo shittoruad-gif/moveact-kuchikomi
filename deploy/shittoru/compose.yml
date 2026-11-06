@@ -1,6 +1,6 @@
 # しっとる用の口コミアプリ（Moveact のアプリ・DBとは別）。
 # サーバーの /opt/shittoru-kuchikomi に置いて動かす。deploy.sh が配る。
-# ドメインは .env の TRAEFIK_RULE で決める（deploy.sh が tenants/*.json から作る）。
+# ドメインは deploy.sh が tenants/*.json から labels.yml に書く（1ドメイン1証明書）。
 name: shittoru-kuchikomi
 
 services:
@@ -35,18 +35,7 @@ services:
       NOTIFY_HUB_URL: ${NOTIFY_HUB_URL:-}
       NOTIFY_HUB_KEY: ${NOTIFY_HUB_KEY:-}
     networks: [internal, coolify]
-    labels:
-      traefik.enable: "true"
-      traefik.docker.network: coolify
-      traefik.http.routers.shittoru-kuchikomi.rule: ${TRAEFIK_RULE}
-      traefik.http.routers.shittoru-kuchikomi.entrypoints: https
-      traefik.http.routers.shittoru-kuchikomi.tls: "true"
-      traefik.http.routers.shittoru-kuchikomi.tls.certresolver: letsencrypt
-      traefik.http.routers.shittoru-kuchikomi-http.rule: ${TRAEFIK_RULE}
-      traefik.http.routers.shittoru-kuchikomi-http.entrypoints: http
-      traefik.http.routers.shittoru-kuchikomi-http.middlewares: shittoru-kuchikomi-https
-      traefik.http.middlewares.shittoru-kuchikomi-https.redirectscheme.scheme: https
-      traefik.http.services.shittoru-kuchikomi.loadbalancer.server.port: "3001"
+    # Traefik のラベル（ドメインごとのルーター）は deploy.sh が labels.yml に書く
 
 volumes:
   db:

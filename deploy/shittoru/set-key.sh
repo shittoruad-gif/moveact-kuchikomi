@@ -9,5 +9,5 @@ read -rsp "GEMINI_API_KEY（しっとる名義のキー）: " KEY; echo
 grep -v '^GEMINI_API_KEY=' .env > .env.new
 echo "GEMINI_API_KEY=$KEY" >> .env.new
 mv .env.new .env; chmod 600 .env
-docker compose up -d app
+docker compose -f compose.yml -f labels.yml up -d app
 echo "入れました。アプリを作り直しました。"
