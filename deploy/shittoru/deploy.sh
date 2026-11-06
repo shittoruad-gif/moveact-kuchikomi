@@ -75,12 +75,12 @@ echo "公開するドメイン:${LIVE:- なし}"
 
 # --- 1. compose.yml / set-key.sh / .env を置く ---
 ssh "$SERVER" "mkdir -p $DIR && chmod 700 $DIR"
-scp -q deploy/shittoru/compose.yml deploy/shittoru/set-key.sh "$SERVER:$DIR/"
+scp -q deploy/shittoru/compose.yml deploy/shittoru/set-key.sh deploy/shittoru/use-threads-key.sh "$SERVER:$DIR/"
 scp -q "$LABELS" "$SERVER:$DIR/labels.yml"; rm -f "$LABELS"
 ssh "$SERVER" "bash -s -- $(printf '%q ' "$DIR" "$TAG" "$FIRST_SLUG")" <<'REMOTE'
 set -euo pipefail
 DIR=$1; TAG=$2; FIRST=$3
-cd "$DIR"; chmod 700 set-key.sh
+cd "$DIR"; chmod 700 set-key.sh use-threads-key.sh
 touch .env; chmod 600 .env
 get() { grep -E "^$1=" .env | head -1 | cut -d= -f2- || true; }
 DBP=$(get DB_PASSWORD);      [ -n "$DBP" ] || DBP=$(openssl rand -hex 24)
@@ -91,6 +91,7 @@ DEF=$(get DEFAULT_TENANT);   [ -n "$DEF" ] || DEF=$FIRST
   echo "DB_ROOT_PASSWORD=$DBR"
   echo "GEMINI_API_KEY=$(get GEMINI_API_KEY)"
   echo "GEMINI_MODEL=$(get GEMINI_MODEL)"
+  echo "GEMINI_BASE_URL=$(get GEMINI_BASE_URL)"
   echo "NOTIFY_HUB_URL=$(get NOTIFY_HUB_URL)"
   echo "NOTIFY_HUB_KEY=$(get NOTIFY_HUB_KEY)"
   echo "DEFAULT_TENANT=$DEF"

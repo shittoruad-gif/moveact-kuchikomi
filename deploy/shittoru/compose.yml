@@ -30,6 +30,7 @@ services:
       DATABASE_URL: mysql://kuchikomi:${DB_PASSWORD}@db:3306/shittoru_kuchikomi
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:-}
       PORT: "3001"
       DEFAULT_TENANT: ${DEFAULT_TENANT}
       NOTIFY_HUB_URL: ${NOTIFY_HUB_URL:-}
