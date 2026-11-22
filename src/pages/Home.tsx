@@ -13,9 +13,12 @@ import { ReviewHistory } from '../components/ReviewHistory'
 import { Sparkles, Loader2 } from 'lucide-react'
 import { SATISFACTION_OPTIONS, type TenantConfig } from '../../shared/tenantConfig'
 import { normalizeSource } from '../../shared/source'
+import { normalizeReviewRef } from '../../shared/reviewRef'
 
 // どこから開いたか（店頭QR／お礼メッセージ）。画面を開いたときのURLで決まる
 const SOURCE = normalizeSource(new URLSearchParams(window.location.search).get('via'))
+// お店からのご案内リンクに付いている予約ごとの目印（shared/reviewRef.ts）。無ければ空
+const REVIEW_REF = normalizeReviewRef(new URLSearchParams(window.location.search).get('r'))
 
 function getVisitorId(): string {
   const key = 'moveact-visitor-id'
@@ -212,6 +215,7 @@ function HomeForm({ config }: { config: TenantConfig }) {
           confirmedRealExperience: 1,
           isNotRelated: 1,
           source: SOURCE,
+          ref: REVIEW_REF || undefined,
         },
         { onSuccess: () => historyQuery.refetch() }
       )
@@ -272,6 +276,11 @@ function HomeForm({ config }: { config: TenantConfig }) {
 
         <LineBrowserWarning />
         <TermsOfService serviceWord={words.service} />
+        {REVIEW_REF && (
+          <p className="text-xs text-ink-soft leading-relaxed mt-3" data-testid="review-ref-note">
+            お店からのご案内リンクから開いています。口コミの下書きを作ってGoogleマップへ進まれると、作成されたことがお店に伝わります（文章の内容は伝わりません）。
+          </p>
+        )}
 
         <RequiredChecks
           agreedToTerms={agreedToTerms}
