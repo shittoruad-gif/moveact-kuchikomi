@@ -9,6 +9,9 @@
  * 書き方は tenants/example.json を見る。
  * 足すだけで、既存のお店の行は書き換えない。同じ slug・同じドメインのお店が
  * もうあるときは止まる（直したいときは、三上様の了解を取ってから手で直す）。
+ *
+ *   --update-config を付けると、同じ slug のお店がもうあるとき、画面の設定（config）だけを JSON の内容に置き換える。
+ *   店舗・メニュー・ドメインは変えない。しっとる用（deploy/shittoru/deploy.sh）が使う。
  */
 import fs from 'fs'
 import mysql, { type ResultSetHeader, type RowDataPacket } from 'mysql2/promise'
@@ -27,6 +30,7 @@ const inputSchema = z.object({
     .extend({
       ogImage: z.string().optional(),
       monthlyLimit: z.number().int().positive().nullable().optional(),
+      demo: z.boolean().optional(),
       colors: tenantConfigSchema.shape.colors.partial().optional(),
       words: tenantConfigSchema.shape.words.partial().optional(),
       options: tenantConfigSchema.shape.options.partial().optional(),
@@ -50,6 +54,7 @@ const inputSchema = z.object({
 async function main() {
   const [file] = process.argv.slice(2).filter((a) => !a.startsWith('--'))
   const apply = process.argv.includes('--apply')
+  const updateConfig = process.argv.includes('--update-config')
   if (!file) throw new Error('JSON ファイルを指定してください（例：npm run add-tenant -- tenants/sample.json）')
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL が設定されていません')
 
@@ -72,6 +77,12 @@ async function main() {
   const conn = await mysql.createConnection(process.env.DATABASE_URL)
   try {
     const [dupSlug] = await conn.query<RowDataPacket[]>('SELECT id FROM tenants WHERE slug = ?', [input.slug])
+    if (dupSlug.length && updateConfig) {
+      console.log(`お店: ${input.slug}（${config.brandName}）はもうあるので、画面の設定だけ置き換えます${config.demo ? '（デモ版）' : ''}`)
+      if (apply) await conn.query('UPDATE tenants SET config = ? WHERE id = ?', [JSON.stringify(config), dupSlug[0].id])
+      else console.log('\n確認だけしました。書き込むときは --apply を付けてください。')
+      return
+    }
     if (dupSlug.length) throw new Error(`slug「${input.slug}」のお店はもうあります`)
     const [all] = await conn.query<RowDataPacket[]>('SELECT slug, hosts FROM tenants')
     for (const t of all) {

@@ -1,0 +1,47 @@
+# しっとる用の口コミアプリ（Moveact のアプリ・DBとは別）。
+# サーバーの /opt/shittoru-kuchikomi に置いて動かす。deploy.sh が配る。
+# ドメインは deploy.sh が tenants/*.json から labels.yml に書く（1ドメイン1証明書）。
+name: shittoru-kuchikomi
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: shittoru_kuchikomi
+      MYSQL_USER: kuchikomi
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db:/var/lib/mysql
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      retries: 30
+
+  app:
+    image: shittoru-kuchikomi:${APP_TAG}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: mysql://kuchikomi:${DB_PASSWORD}@db:3306/shittoru_kuchikomi
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+      GEMINI_BASE_URL: ${GEMINI_BASE_URL:-}
+      PORT: "3001"
+      DEFAULT_TENANT: ${DEFAULT_TENANT}
+      NOTIFY_HUB_URL: ${NOTIFY_HUB_URL:-}
+      NOTIFY_HUB_KEY: ${NOTIFY_HUB_KEY:-}
+    networks: [internal, coolify]
+    # Traefik のラベル（ドメインごとのルーター）は deploy.sh が labels.yml に書く
+
+volumes:
+  db:
+
+networks:
+  internal:
+  coolify:
+    external: true

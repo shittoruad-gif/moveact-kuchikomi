@@ -8,9 +8,11 @@ interface ReviewResultProps {
   googleMapsUrl: string
   // 実際に投稿されるテキスト（編集後）を受け取って履歴に保存する
   onGoogleMapsOpen: (postedText: string) => void
+  // デモ版：文章は見せるだけ。コピー・投稿・編集はできない
+  demo?: boolean
 }
 
-export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: ReviewResultProps) {
+export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen, demo }: ReviewResultProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [editedText, setEditedText] = useState(variations[0])
   const [copied, setCopied] = useState(false)
@@ -92,12 +94,15 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
       {/* Editor */}
       <div className="mb-3">
         <label className="block text-sm font-medium text-ink mb-1">
-          口コミを編集（自由に修正できます）
+          {demo ? '口コミの例（デモ版）' : '口コミを編集（自由に修正できます）'}
         </label>
         <textarea
           value={editedText}
           onChange={(e) => setEditedText(e.target.value)}
-          className="w-full border border-line rounded-lg px-3 py-2 text-sm resize-none bg-surface"
+          readOnly={demo}
+          onCopy={demo ? (e) => e.preventDefault() : undefined}
+          onCut={demo ? (e) => e.preventDefault() : undefined}
+          className={`w-full border border-line rounded-lg px-3 py-2 text-sm resize-none bg-surface ${demo ? 'select-none' : ''}`}
           rows={8}
         />
         <p className="text-xs text-ink-soft mt-1">{editedText.length}文字</p>
@@ -125,7 +130,12 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons（デモ版はコピー・投稿の代わりに案内だけ出す） */}
+      {demo ? (
+        <div className="bg-warn-soft border-l-2 border-warn rounded-r-md p-3 text-sm text-warn">
+          こちらはデモ版です。文章のコピーとGoogleマップへの投稿は、本導入後にご利用いただけます。
+        </div>
+      ) : (
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={handleCopy}
@@ -143,6 +153,7 @@ export function ReviewResult({ variations, googleMapsUrl, onGoogleMapsOpen }: Re
           Google マップで投稿する
         </button>
       </div>
+      )}
 
       {/* Confirm dialog */}
       {showConfirmDialog && (
