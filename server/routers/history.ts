@@ -8,19 +8,21 @@ import { normalizeReviewRef } from '../../shared/reviewRef'
 
 /**
  * Moveact の予約システムへ「この目印の方が下書きを作ってGoogleマップへ進んだ」と知らせる先。
- * 知らせるのは目印だけ（文章の中身・お名前は送らない）。Moveact（お店の id=1）のときだけ使う。
+ * 知らせるのは目印と、Googleマップへ持っていった口コミの文章（2026-11-23 三上様：Googleに実際に
+ * 投稿されたかを、Googleの口コミの文章と見比べて確かめるため。画面にもその旨を出している）。
+ * お名前・連絡先は送らない。Moveact（お店の id=1）のときだけ使う。
  * 知らせに失敗しても、お客様の操作は止めない。
  */
 const MOVEACT_REVIEW_WEBHOOK =
   process.env.MOVEACT_REVIEW_WEBHOOK_URL ?? 'https://khsriogicdjdyivshplc.supabase.co/functions/v1/review-written'
 
-function notifyReviewWritten(ref: string): void {
+function notifyReviewWritten(ref: string, text: string): void {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), 8000)
   fetch(MOVEACT_REVIEW_WEBHOOK, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ref }),
+    body: JSON.stringify({ ref, text: text.slice(0, 4000) }),
     signal: ctrl.signal,
   })
     .then((r) => { if (!r.ok) console.warn('[review-ref] 知らせに失敗', r.status) })
@@ -44,7 +46,7 @@ export const historyRouter = router({
         isNotRelated: z.number(),
         // 古い画面（キャッシュ）からは来ないので省略可
         source: z.enum(SOURCES).optional(),
-        // お店からのご案内リンクの目印（shared/reviewRef.ts）。DBには入れず、予約システムへ知らせるだけ
+        // お店からのご案内リンクの目印（shared/reviewRef.ts）。DBには入れず、予約システムへ文章と一緒に知らせるだけ
         ref: z.string().max(64).optional(),
       })
     )
@@ -58,7 +60,7 @@ export const historyRouter = router({
       // 店名は月次レポートの集計に使うので、画面からの値ではなくDBの値を入れる
       const { ref: rawRef, ...row } = input
       const ref = normalizeReviewRef(rawRef)
-      if (ref && ctx.tenant.id === 1) notifyReviewWritten(ref)
+      if (ref && ctx.tenant.id === 1) notifyReviewWritten(ref, input.reviewText)
       return db.insert(reviewHistory).values({
         ...row,
         source: input.source ?? 'direct',

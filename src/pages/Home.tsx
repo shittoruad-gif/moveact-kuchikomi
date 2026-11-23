@@ -278,7 +278,7 @@ function HomeForm({ config }: { config: TenantConfig }) {
         <TermsOfService serviceWord={words.service} />
         {REVIEW_REF && (
           <p className="text-xs text-ink-soft leading-relaxed mt-3" data-testid="review-ref-note">
-            お店からのご案内リンクから開いています。口コミの下書きを作ってGoogleマップへ進まれると、作成されたことがお店に伝わります（文章の内容は伝わりません）。
+            お店からのご案内リンクから開いています。作成された口コミの文章は、Googleへの投稿を確かめるためにお店に伝わります。
           </p>
         )}
 
